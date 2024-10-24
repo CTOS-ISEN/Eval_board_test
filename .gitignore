@@ -67,6 +67,11 @@ doc/api/
 
 # Include makefiles
 !Makefile
+
+# STM32CubeIDE
+.metadata/
+.settings/
+*.ld
 *~
 
 # Libraries
