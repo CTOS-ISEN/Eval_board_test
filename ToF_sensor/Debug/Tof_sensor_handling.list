@@ -1,5 +1,5 @@
 
-Tof_sensor.elf:     file format elf32-littlearm
+Tof_sensor_handling.elf:     file format elf32-littlearm
 
 Sections:
 Idx Name          Size      VMA       LMA       File off  Algn
