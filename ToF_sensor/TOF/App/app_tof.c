@@ -103,11 +103,11 @@ static void MX_53L4A2_SimpleRanging_Init(void)
   printf("53L4A2 Simple Ranging demo application\n");
   status = VL53L4A2_RANGING_SENSOR_Init(VL53L4A2_DEV_CENTER);
 
-  if (status != BSP_ERROR_NONE)
+  /*if (status != BSP_ERROR_NONE)
   {
     printf("VL53L4A2_RANGING_SENSOR_Init failed\n");
     while (1);
-  }
+  }*/
 }
 
 static void MX_53L4A2_SimpleRanging_Process(void)

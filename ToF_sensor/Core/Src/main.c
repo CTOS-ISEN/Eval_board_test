@@ -18,22 +18,26 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "cmsis_os.h"
 #include "app_tof.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include <stdio.h>
 #include <stdlib.h>
+#include "53l4a2_ranging_sensor.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
+typedef StaticQueue_t osStaticMessageQDef_t;
 /* USER CODE BEGIN PTD */
 
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-
+#define TIMING_BUDGET (30U) /* 8 ms < TimingBudget < 200 ms */
+#define POLLING_PERIOD (250U) /* refresh rate for polling mode (ms, shall be consistent with TimingBudget value) */
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -45,8 +49,47 @@
 
 PCD_HandleTypeDef hpcd_USB_FS;
 
+/* Definitions for defaultTask */
+osThreadId_t defaultTaskHandle;
+const osThreadAttr_t defaultTask_attributes = {
+  .name = "defaultTask",
+  .priority = (osPriority_t) osPriorityNormal,
+  .stack_size = 128 * 4
+};
+/* Definitions for Ack_ToF_Data */
+osThreadId_t Ack_ToF_DataHandle;
+const osThreadAttr_t Ack_ToF_Data_attributes = {
+  .name = "Ack_ToF_Data",
+  .priority = (osPriority_t) osPriorityNormal,
+  .stack_size = 512 * 4
+};
+/* Definitions for SendData */
+osThreadId_t SendDataHandle;
+const osThreadAttr_t SendData_attributes = {
+  .name = "SendData",
+  .priority = (osPriority_t) osPriorityLow,
+  .stack_size = 512 * 4
+};
+/* Definitions for ToFData_Queue */
+osMessageQueueId_t ToFData_QueueHandle;
+uint8_t ToFData_QueueBuffer[ 16 * sizeof( RANGING_SENSOR_Result_t ) ];
+osStaticMessageQDef_t ToFData_QueueControlBlock;
+const osMessageQueueAttr_t ToFData_Queue_attributes = {
+  .name = "ToFData_Queue",
+  .cb_mem = &ToFData_QueueControlBlock,
+  .cb_size = sizeof(ToFData_QueueControlBlock),
+  .mq_mem = &ToFData_QueueBuffer,
+  .mq_size = sizeof(ToFData_QueueBuffer)
+};
+/* Definitions for myMutex01 */
+osMutexId_t myMutex01Handle;
+const osMutexAttr_t myMutex01_attributes = {
+  .name = "myMutex01"
+};
 /* USER CODE BEGIN PV */
-
+static RANGING_SENSOR_ProfileConfig_t Profile;
+RANGING_SENSOR_Result_t Result;
+int32_t status = 0;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -54,8 +97,14 @@ void SystemClock_Config(void);
 void PeriphCommonClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_USB_PCD_Init(void);
+void StartDefaultTask(void *argument);
+void StartAck_ToF_Data(void *argument);
+void StartSendData(void *argument);
+
 /* USER CODE BEGIN PFP */
 int _write(int file,char *ptr,int len);
+static void print_result(RANGING_SENSOR_Result_t *Result);
+static int32_t decimal_part(float_t x);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -69,6 +118,42 @@ for (DataIdx = 0; DataIdx < len; DataIdx++)
 ITM_SendChar(*ptr++);
 }
 return len;
+}
+
+static void print_result(RANGING_SENSOR_Result_t *Result)
+{
+  uint8_t i;
+  uint8_t j;
+
+  for (i = 0; i < RANGING_SENSOR_MAX_NB_ZONES; i++)
+  {
+    printf("\nTargets = %lu", (unsigned long)Result->ZoneResult[i].NumberOfTargets);
+
+    for (j = 0; j < Result->ZoneResult[i].NumberOfTargets; j++)
+    {
+      printf("\n |---> ");
+
+      printf("Status = %ld, Distance = %5ld mm ",
+             (long)Result->ZoneResult[i].Status[j],
+             (long)Result->ZoneResult[i].Distance[j]);
+
+      if (Profile.EnableAmbient)
+        printf(", Ambient = %ld.%02ld kcps/spad",
+               (long)Result->ZoneResult[i].Ambient[j],
+               (long)decimal_part(Result->ZoneResult[i].Ambient[j]));
+
+      if (Profile.EnableSignal)
+        printf(", Signal = %ld.%02ld kcps/spad",
+               (long)Result->ZoneResult[i].Signal[j],
+               (long)decimal_part(Result->ZoneResult[i].Signal[j]));
+    }
+  }
+  printf("\n");
+}
+static int32_t decimal_part(float_t x)
+{
+  int32_t int_part = (int32_t) x;
+  return (int32_t)((x - int_part) * 100);
 }
 /* USER CODE END 0 */
 
@@ -108,7 +193,100 @@ int main(void)
   MX_TOF_Init();
   /* USER CODE BEGIN 2 */
 
+  Profile.RangingProfile = RS_MULTI_TARGET_MEDIUM_RANGE;
+    Profile.TimingBudget = TIMING_BUDGET;
+    Profile.Frequency = 0; /* Induces intermeasurement period, NOT USED for normal ranging */
+    Profile.EnableAmbient = 1; /* Enable: 1, Disable: 0 */
+    Profile.EnableSignal = 1; /* Enable: 1, Disable: 0 */
+    status = VL53L4A2_RANGING_SENSOR_ConfigProfile(VL53L4A2_DEV_CENTER, &Profile);
+    if (status != BSP_ERROR_NONE)
+    {
+        printf("VL53L4A2_RANGING_SENSOR_ConfigProfile failed with status %ld\n", status);
+        Error_Handler();
+    }
+    else
+    {
+        printf("VL53L4A2_RANGING_SENSOR_ConfigProfile succeeded\n");
+    }
+    status = VL53L4A2_RANGING_SENSOR_Start(VL53L4A2_DEV_CENTER, RS_MODE_BLOCKING_CONTINUOUS);
+
+      if (status != BSP_ERROR_NONE)
+      {
+        printf("VL53L4A2_RANGING_SENSOR_Start failed\n");
+        while (1);
+      }
+
+      //Calibration at 100mm
+      for (int i = 0; i < 10; i++)
+        {
+          status = VL53L4A2_RANGING_SENSOR_GetDistance(VL53L4A2_DEV_CENTER, &Result);
+
+          if (status == BSP_ERROR_NONE)
+          {
+            print_result(&Result);
+          }
+
+          HAL_Delay(POLLING_PERIOD);
+        }
+      VL53L4A2_RANGING_SENSOR_Stop(VL53L4A2_DEV_CENTER);
+      VL53L4A2_RANGING_SENSOR_OffsetCalibration(VL53L4A2_DEV_CENTER, 100);
+      status = VL53L4A2_RANGING_SENSOR_Start(VL53L4A2_DEV_CENTER, RS_MODE_BLOCKING_CONTINUOUS);
+
+        if (status != BSP_ERROR_NONE)
+        {
+          printf("VL53L4A2_RANGING_SENSOR_Start failed\n");
+          while (1);
+        }
   /* USER CODE END 2 */
+
+  /* Init scheduler */
+  osKernelInitialize();
+  /* Create the mutex(es) */
+  /* creation of myMutex01 */
+  myMutex01Handle = osMutexNew(&myMutex01_attributes);
+
+  /* USER CODE BEGIN RTOS_MUTEX */
+  /* add mutexes, ... */
+  /* USER CODE END RTOS_MUTEX */
+
+  /* USER CODE BEGIN RTOS_SEMAPHORES */
+  /* add semaphores, ... */
+  /* USER CODE END RTOS_SEMAPHORES */
+
+  /* USER CODE BEGIN RTOS_TIMERS */
+  /* start timers, add new ones, ... */
+  /* USER CODE END RTOS_TIMERS */
+
+  /* Create the queue(s) */
+  /* creation of ToFData_Queue */
+  ToFData_QueueHandle = osMessageQueueNew (16, sizeof(RANGING_SENSOR_Result_t), &ToFData_Queue_attributes);
+
+  /* USER CODE BEGIN RTOS_QUEUES */
+  /* add queues, ... */
+  /* USER CODE END RTOS_QUEUES */
+
+  /* Create the thread(s) */
+  /* creation of defaultTask */
+  defaultTaskHandle = osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes);
+
+  /* creation of Ack_ToF_Data */
+  Ack_ToF_DataHandle = osThreadNew(StartAck_ToF_Data, NULL, &Ack_ToF_Data_attributes);
+
+  /* creation of SendData */
+  SendDataHandle = osThreadNew(StartSendData, NULL, &SendData_attributes);
+
+  /* USER CODE BEGIN RTOS_THREADS */
+  /* add threads, ... */
+  /* USER CODE END RTOS_THREADS */
+
+  /* USER CODE BEGIN RTOS_EVENTS */
+  /* add events, ... */
+  /* USER CODE END RTOS_EVENTS */
+
+  /* Start scheduler */
+  osKernelStart();
+
+  /* We should never get here as control is now taken by the scheduler */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
@@ -117,7 +295,6 @@ int main(void)
 
     /* USER CODE END WHILE */
 
-  MX_TOF_Process();
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */
@@ -265,18 +442,18 @@ static void MX_GPIO_Init(void)
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOB, LD2_Pin|LD3_Pin|LD1_Pin, GPIO_PIN_RESET);
 
-  /*Configure GPIO pin : B1_Pin */
-  GPIO_InitStruct.Pin = B1_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
-  GPIO_InitStruct.Pull = GPIO_PULLUP;
-  HAL_GPIO_Init(B1_GPIO_Port, &GPIO_InitStruct);
-
   /*Configure GPIO pins : LD2_Pin LD3_Pin LD1_Pin */
   GPIO_InitStruct.Pin = LD2_Pin|LD3_Pin|LD1_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : B2_Pin */
+  GPIO_InitStruct.Pin = B2_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
+  HAL_GPIO_Init(B2_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pin : B3_Pin */
   GPIO_InitStruct.Pin = B3_Pin;
@@ -285,10 +462,10 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_Init(B3_GPIO_Port, &GPIO_InitStruct);
 
   /* EXTI interrupt init*/
-  HAL_NVIC_SetPriority(EXTI0_IRQn, 0, 0);
+  HAL_NVIC_SetPriority(EXTI0_IRQn, 5, 0);
   HAL_NVIC_EnableIRQ(EXTI0_IRQn);
 
-  HAL_NVIC_SetPriority(EXTI4_IRQn, 0, 0);
+  HAL_NVIC_SetPriority(EXTI4_IRQn, 5, 0);
   HAL_NVIC_EnableIRQ(EXTI4_IRQn);
 
 /* USER CODE BEGIN MX_GPIO_Init_2 */
@@ -298,6 +475,96 @@ static void MX_GPIO_Init(void)
 /* USER CODE BEGIN 4 */
 
 /* USER CODE END 4 */
+
+/* USER CODE BEGIN Header_StartDefaultTask */
+/**
+  * @brief  Function implementing the defaultTask thread.
+  * @param  argument: Not used
+  * @retval None
+  */
+/* USER CODE END Header_StartDefaultTask */
+void StartDefaultTask(void *argument)
+{
+  /* USER CODE BEGIN 5 */
+
+  /* Infinite loop */
+  for(;;)
+  {
+	  osDelay(1);
+  }
+  /* USER CODE END 5 */
+}
+
+/* USER CODE BEGIN Header_StartAck_ToF_Data */
+/**
+* @brief Function implementing the Ack_ToF_Data thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_StartAck_ToF_Data */
+void StartAck_ToF_Data(void *argument)
+{
+  /* USER CODE BEGIN StartAck_ToF_Data */
+  /* Infinite loop */
+  for(;;)
+  {
+	  status = VL53L4A2_RANGING_SENSOR_GetDistance(VL53L4A2_DEV_CENTER, &Result);
+	      if (status == BSP_ERROR_NONE)
+	      {
+
+	    	  //print_result(&Result);
+	        osMessageQueuePut(ToFData_QueueHandle, &Result, 1, osWaitForever);
+	      }
+	      osDelay(POLLING_PERIOD);
+  }
+  /* USER CODE END StartAck_ToF_Data */
+}
+
+/* USER CODE BEGIN Header_StartSendData */
+/**
+* @brief Function implementing the SendData thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_StartSendData */
+void StartSendData(void *argument)
+{
+  /* USER CODE BEGIN StartSendData */
+	static RANGING_SENSOR_Result_t result;
+  /* Infinite loop */
+  for(;;)
+  {
+	  osMutexAcquire(myMutex01Handle, osWaitForever);
+
+	  osMessageQueueGet(ToFData_QueueHandle, &result, 1, osWaitForever);
+	  print_result(&result);
+
+	   osMutexRelease(myMutex01Handle);
+    osDelay(1);
+  }
+  /* USER CODE END StartSendData */
+}
+
+/**
+  * @brief  Period elapsed callback in non blocking mode
+  * @note   This function is called  when TIM17 interrupt took place, inside
+  * HAL_TIM_IRQHandler(). It makes a direct call to HAL_IncTick() to increment
+  * a global variable "uwTick" used as application time base.
+  * @param  htim : TIM handle
+  * @retval None
+  */
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
+{
+  /* USER CODE BEGIN Callback 0 */
+
+  /* USER CODE END Callback 0 */
+  if (htim->Instance == TIM17) {
+    HAL_IncTick();
+  }
+  /* USER CODE BEGIN Callback 1 */
+
+  /* USER CODE END Callback 1 */
+}
 
 /**
   * @brief  This function is executed in case of error occurrence.

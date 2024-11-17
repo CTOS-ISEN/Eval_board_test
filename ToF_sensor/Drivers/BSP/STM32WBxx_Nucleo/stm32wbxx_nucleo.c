@@ -60,7 +60,7 @@ typedef void (* BSP_BUTTON_GPIO_Init) (void);
 static GPIO_TypeDef*   BUTTON_PORT[BUTTONn] = {USER_BUTTON_GPIO_PORT};
 static const uint16_t  BUTTON_PIN[BUTTONn]  = {USER_BUTTON_PIN};
 static const IRQn_Type BUTTON_IRQn[BUTTONn] = {USER_BUTTON_EXTI_IRQn};
-EXTI_HandleTypeDef hpb_exti[BUTTONn] = {{.Line = EXTI_LINE_0}};
+EXTI_HandleTypeDef hpb_exti[BUTTONn] = {{.Line = EXTI_LINE_4}};
 USART_TypeDef* COM_USART[COMn] = {COM1_UART};
 UART_HandleTypeDef hcom_uart[COMn];
 #if (USE_COM_LOG > 0)
@@ -206,16 +206,16 @@ static void BUTTON_USER_EXTI_Callback(void)
 static void BUTTON_USER_GPIO_Init(void) {
 
   /* GPIO Ports Clock Enable */
-  __HAL_RCC_GPIOD_CLK_ENABLE();
+  __HAL_RCC_GPIOC_CLK_ENABLE();
 
   /* EXTI interrupt init*/
-  HAL_NVIC_SetPriority(EXTI0_IRQn, 0, 0);
-  HAL_NVIC_EnableIRQ(EXTI0_IRQn);
+  HAL_NVIC_SetPriority(EXTI4_IRQn, 5, 0);
+  HAL_NVIC_EnableIRQ(EXTI4_IRQn);
 
   GPIO_InitTypeDef GPIO_InitStruct = {0};
 
   /* GPIO Ports Clock Enable */
-  __HAL_RCC_GPIOD_CLK_ENABLE();
+  __HAL_RCC_GPIOC_CLK_ENABLE();
 
   /*Configure GPIO pin : PTPIN */
   GPIO_InitStruct.Pin = BUS_BSP_BUTTON_GPIO_PIN;
@@ -224,8 +224,8 @@ static void BUTTON_USER_GPIO_Init(void) {
   HAL_GPIO_Init(BUS_BSP_BUTTON_GPIO_PORT, &GPIO_InitStruct);
 
   /* EXTI interrupt init*/
-  HAL_NVIC_SetPriority(EXTI0_IRQn, 0, 0);
-  HAL_NVIC_EnableIRQ(EXTI0_IRQn);
+  HAL_NVIC_SetPriority(EXTI4_IRQn, 5, 0);
+  HAL_NVIC_EnableIRQ(EXTI4_IRQn);
 
 }
 

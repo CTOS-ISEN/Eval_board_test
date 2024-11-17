@@ -28,8 +28,8 @@ extern "C" {
 #include "stm32wbxx_hal.h"
 
 /* Exported symbols ----------------------------------------------------------*/
-#define TOF_INT_EXTI_PIN    (GPIO_PIN_4)
-#define TOF_INT_EXTI_PORT   (GPIOC)
+#define TOF_INT_EXTI_PIN    (GPIO_PIN_0)
+#define TOF_INT_EXTI_PORT   (GPIOD)
 
 #define VL53L4A2_XSHUT_C_PIN   (GPIO_PIN_0)
 #define VL53L4A2_XSHUT_C_PORT  (GPIOB)
