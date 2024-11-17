@@ -9,10 +9,11 @@ RM := rm -rf
 
 # All of the sources participating in the build are defined here
 -include sources.mk
--include TOF/Target/subdir.mk
--include TOF/App/subdir.mk
+-include Middlewares/Third_Party/FreeRTOS/Source/portable/MemMang/subdir.mk
+-include Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/subdir.mk
+-include Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2/subdir.mk
+-include Middlewares/Third_Party/FreeRTOS/Source/subdir.mk
 -include Drivers/STM32WBxx_HAL_Driver/Src/subdir.mk
--include Drivers/BSP/STM32WBxx_Nucleo/subdir.mk
 -include Drivers/BSP/Components/vl53l4cx/porting/subdir.mk
 -include Drivers/BSP/Components/vl53l4cx/modules/subdir.mk
 -include Drivers/BSP/Components/vl53l4cx/subdir.mk

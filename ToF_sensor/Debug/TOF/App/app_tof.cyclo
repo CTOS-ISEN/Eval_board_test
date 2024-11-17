@@ -1,7 +1,0 @@
-../TOF/App/app_tof.c:54:6:MX_TOF_Init	1
-../TOF/App/app_tof.c:76:6:MX_TOF_Process	1
-../TOF/App/app_tof.c:89:13:MX_53L4A2_SimpleRanging_Init	2
-../TOF/App/app_tof.c:113:13:MX_53L4A2_SimpleRanging_Process	7
-../TOF/App/app_tof.c:191:13:print_result	5
-../TOF/App/app_tof.c:222:16:decimal_part	1
-../TOF/App/app_tof.c:228:6:BSP_PB_Callback	1

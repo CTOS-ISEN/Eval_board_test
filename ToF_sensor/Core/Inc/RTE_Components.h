@@ -23,7 +23,6 @@
 
 /* Defines ------------------------------------------------------------------*/
 /* STMicroelectronics.X-CUBE-TOF1.3.4.2 */
-#define _53L4A2_SIMPLE_RANGING
 #define _53L4A2
 
 #endif /* __RTE_COMPONENTS_H__ */

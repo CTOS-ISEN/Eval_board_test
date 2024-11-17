@@ -29,7 +29,6 @@ extern "C" {
 /* Includes ------------------------------------------------------------------*/
 #include "stm32wbxx_hal.h"
 
-#include "stm32wbxx_nucleo.h"
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 
@@ -69,7 +68,9 @@ void Error_Handler(void);
 #define JTMS_GPIO_Port GPIOA
 #define JTCK_Pin GPIO_PIN_14
 #define JTCK_GPIO_Port GPIOA
-#define BSP_BUTTON_EXTI_IRQn EXTI0_IRQn
+#define B2_Pin GPIO_PIN_0
+#define B2_GPIO_Port GPIOD
+#define B2_EXTI_IRQn EXTI0_IRQn
 #define B3_Pin GPIO_PIN_1
 #define B3_GPIO_Port GPIOD
 #define LD1_Pin GPIO_PIN_5
