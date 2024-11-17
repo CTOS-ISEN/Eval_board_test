@@ -19,6 +19,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "cmsis_os.h"
+#include "app_tof.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -45,8 +46,6 @@ typedef StaticQueue_t osStaticMessageQDef_t;
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
-
-UART_HandleTypeDef huart1;
 
 PCD_HandleTypeDef hpcd_USB_FS;
 
@@ -98,7 +97,6 @@ void SystemClock_Config(void);
 void PeriphCommonClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_USB_PCD_Init(void);
-static void MX_USART1_UART_Init(void);
 void StartDefaultTask(void *argument);
 void StartAck_ToF_Data(void *argument);
 void StartSendData(void *argument);
@@ -192,15 +190,9 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USB_PCD_Init();
-  MX_USART1_UART_Init();
+  MX_TOF_Init();
   /* USER CODE BEGIN 2 */
 
-  status = VL53L4A2_RANGING_SENSOR_Init(VL53L4A2_DEV_CENTER);
-  if (status != BSP_ERROR_NONE)
-    {
-      printf("VL53L4A2_RANGING_SENSOR_Init failed\n");
-      Error_Handler();
-    }
   Profile.RangingProfile = RS_MULTI_TARGET_MEDIUM_RANGE;
     Profile.TimingBudget = TIMING_BUDGET;
     Profile.Frequency = 0; /* Induces intermeasurement period, NOT USED for normal ranging */
@@ -223,7 +215,28 @@ int main(void)
         printf("VL53L4A2_RANGING_SENSOR_Start failed\n");
         while (1);
       }
-      //VL53L4A2_RANGING_SENSOR_OffsetCalibration(VL53L4A2_DEV_CENTER, 100);
+
+      //Calibration at 100mm
+      for (int i = 0; i < 10; i++)
+        {
+          status = VL53L4A2_RANGING_SENSOR_GetDistance(VL53L4A2_DEV_CENTER, &Result);
+
+          if (status == BSP_ERROR_NONE)
+          {
+            print_result(&Result);
+          }
+
+          HAL_Delay(POLLING_PERIOD);
+        }
+      VL53L4A2_RANGING_SENSOR_Stop(VL53L4A2_DEV_CENTER);
+      VL53L4A2_RANGING_SENSOR_OffsetCalibration(VL53L4A2_DEV_CENTER, 100);
+      status = VL53L4A2_RANGING_SENSOR_Start(VL53L4A2_DEV_CENTER, RS_MODE_BLOCKING_CONTINUOUS);
+
+        if (status != BSP_ERROR_NONE)
+        {
+          printf("VL53L4A2_RANGING_SENSOR_Start failed\n");
+          while (1);
+        }
   /* USER CODE END 2 */
 
   /* Init scheduler */
@@ -377,54 +390,6 @@ void PeriphCommonClock_Config(void)
 }
 
 /**
-  * @brief USART1 Initialization Function
-  * @param None
-  * @retval None
-  */
-static void MX_USART1_UART_Init(void)
-{
-
-  /* USER CODE BEGIN USART1_Init 0 */
-
-  /* USER CODE END USART1_Init 0 */
-
-  /* USER CODE BEGIN USART1_Init 1 */
-
-  /* USER CODE END USART1_Init 1 */
-  huart1.Instance = USART1;
-  huart1.Init.BaudRate = 115200;
-  huart1.Init.WordLength = UART_WORDLENGTH_7B;
-  huart1.Init.StopBits = UART_STOPBITS_1;
-  huart1.Init.Parity = UART_PARITY_NONE;
-  huart1.Init.Mode = UART_MODE_TX_RX;
-  huart1.Init.HwFlowCtl = UART_HWCONTROL_NONE;
-  huart1.Init.OverSampling = UART_OVERSAMPLING_16;
-  huart1.Init.OneBitSampling = UART_ONE_BIT_SAMPLE_DISABLE;
-  huart1.Init.ClockPrescaler = UART_PRESCALER_DIV1;
-  huart1.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
-  if (HAL_UART_Init(&huart1) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  if (HAL_UARTEx_SetTxFifoThreshold(&huart1, UART_TXFIFO_THRESHOLD_1_8) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  if (HAL_UARTEx_SetRxFifoThreshold(&huart1, UART_RXFIFO_THRESHOLD_1_8) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  if (HAL_UARTEx_DisableFifoMode(&huart1) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  /* USER CODE BEGIN USART1_Init 2 */
-
-  /* USER CODE END USART1_Init 2 */
-
-}
-
-/**
   * @brief USB Initialization Function
   * @param None
   * @retval None
@@ -476,12 +441,6 @@ static void MX_GPIO_Init(void)
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOB, LD2_Pin|LD3_Pin|LD1_Pin, GPIO_PIN_RESET);
-
-  /*Configure GPIO pin : B1_Pin */
-  GPIO_InitStruct.Pin = B1_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
-  GPIO_InitStruct.Pull = GPIO_PULLUP;
-  HAL_GPIO_Init(B1_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pins : LD2_Pin LD3_Pin LD1_Pin */
   GPIO_InitStruct.Pin = LD2_Pin|LD3_Pin|LD1_Pin;
@@ -553,7 +512,7 @@ void StartAck_ToF_Data(void *argument)
 	      if (status == BSP_ERROR_NONE)
 	      {
 
-	    	  print_result(&Result);
+	    	  //print_result(&Result);
 	        osMessageQueuePut(ToFData_QueueHandle, &Result, 1, osWaitForever);
 	      }
 	      osDelay(POLLING_PERIOD);
@@ -575,12 +534,12 @@ void StartSendData(void *argument)
   /* Infinite loop */
   for(;;)
   {
-	  //osMutexAcquire(myMutex01Handle, osWaitForever);
+	  osMutexAcquire(myMutex01Handle, osWaitForever);
 
 	  osMessageQueueGet(ToFData_QueueHandle, &result, 1, osWaitForever);
 	  print_result(&result);
 
-	   //osMutexRelease(myMutex01Handle);
+	   osMutexRelease(myMutex01Handle);
     osDelay(1);
   }
   /* USER CODE END StartSendData */

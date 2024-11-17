@@ -33,6 +33,7 @@
 "./Drivers/BSP/Components/vl53l4cx/porting/vl53lx_platform_ipp.o"
 "./Drivers/BSP/Components/vl53l4cx/porting/vl53lx_platform_log.o"
 "./Drivers/BSP/Components/vl53l4cx/vl53l4cx.o"
+"./Drivers/BSP/STM32WBxx_Nucleo/stm32wbxx_nucleo.o"
 "./Drivers/STM32WBxx_HAL_Driver/Src/stm32wbxx_hal.o"
 "./Drivers/STM32WBxx_HAL_Driver/Src/stm32wbxx_hal_cortex.o"
 "./Drivers/STM32WBxx_HAL_Driver/Src/stm32wbxx_hal_dma.o"
@@ -66,3 +67,5 @@
 "./Middlewares/Third_Party/FreeRTOS/Source/timers.o"
 "./Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/port.o"
 "./Middlewares/Third_Party/FreeRTOS/Source/portable/MemMang/heap_4.o"
+"./TOF/App/app_tof.o"
+"./TOF/Target/app_tof_pin_conf.o"

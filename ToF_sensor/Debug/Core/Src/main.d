@@ -40,6 +40,9 @@ Core/Src/main.o: ../Core/Src/main.c ../Core/Inc/main.h \
  ../Drivers/STM32WBxx_HAL_Driver/Inc/stm32wbxx_hal_uart.h \
  ../Drivers/STM32WBxx_HAL_Driver/Inc/stm32wbxx_hal_uart_ex.h \
  ../Drivers/STM32WBxx_HAL_Driver/Inc/stm32wbxx_ll_system.h \
+ ../Drivers/BSP/STM32WBxx_Nucleo/stm32wbxx_nucleo.h \
+ ../Core/Inc/stm32wbxx_nucleo_conf.h \
+ ../Drivers/BSP/STM32WBxx_Nucleo/stm32wbxx_nucleo_errno.h \
  ../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2/cmsis_os.h \
  ../Middlewares/Third_Party/FreeRTOS/Source/include/FreeRTOS.h \
  ../Core/Inc/FreeRTOSConfig.h \
@@ -51,7 +54,7 @@ Core/Src/main.o: ../Core/Src/main.c ../Core/Inc/main.h \
  ../Middlewares/Third_Party/FreeRTOS/Source/include/task.h \
  ../Middlewares/Third_Party/FreeRTOS/Source/include/list.h \
  ../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2/cmsis_os2.h \
- ../Drivers/BSP/53L4A2/53l4a2_ranging_sensor.h \
+ ../TOF/App/app_tof.h ../Drivers/BSP/53L4A2/53l4a2_ranging_sensor.h \
  ../Drivers/BSP/Components/Common/ranging_sensor.h \
  ../TOF/Target/53l4a2_conf.h ../Core/Inc/stm32wbxx_nucleo_bus.h \
  ../Core/Inc/stm32wbxx_nucleo_conf.h ../Core/Inc/stm32wbxx_nucleo_errno.h \
@@ -111,6 +114,9 @@ Core/Src/main.o: ../Core/Src/main.c ../Core/Inc/main.h \
 ../Drivers/STM32WBxx_HAL_Driver/Inc/stm32wbxx_hal_uart.h:
 ../Drivers/STM32WBxx_HAL_Driver/Inc/stm32wbxx_hal_uart_ex.h:
 ../Drivers/STM32WBxx_HAL_Driver/Inc/stm32wbxx_ll_system.h:
+../Drivers/BSP/STM32WBxx_Nucleo/stm32wbxx_nucleo.h:
+../Core/Inc/stm32wbxx_nucleo_conf.h:
+../Drivers/BSP/STM32WBxx_Nucleo/stm32wbxx_nucleo_errno.h:
 ../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2/cmsis_os.h:
 ../Middlewares/Third_Party/FreeRTOS/Source/include/FreeRTOS.h:
 ../Core/Inc/FreeRTOSConfig.h:
@@ -122,6 +128,7 @@ Core/Src/main.o: ../Core/Src/main.c ../Core/Inc/main.h \
 ../Middlewares/Third_Party/FreeRTOS/Source/include/task.h:
 ../Middlewares/Third_Party/FreeRTOS/Source/include/list.h:
 ../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2/cmsis_os2.h:
+../TOF/App/app_tof.h:
 ../Drivers/BSP/53L4A2/53l4a2_ranging_sensor.h:
 ../Drivers/BSP/Components/Common/ranging_sensor.h:
 ../TOF/Target/53l4a2_conf.h:
