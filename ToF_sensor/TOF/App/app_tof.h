@@ -27,12 +27,13 @@ extern "C" {
 #endif
 
 /* Includes ------------------------------------------------------------------*/
-
+#include "53l4a2_ranging_sensor.h"
 /* Exported defines ----------------------------------------------------------*/
 
 /* Exported functions --------------------------------------------------------*/
 void MX_TOF_Init(void);
-void MX_TOF_Process(void);
+void MX_TOF_Process(RANGING_SENSOR_Result_t* result);
+void print_result(RANGING_SENSOR_Result_t *Result);
 
 #ifdef __cplusplus
 }
