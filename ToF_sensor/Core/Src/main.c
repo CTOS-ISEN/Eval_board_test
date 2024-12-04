@@ -26,6 +26,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "53l4a2_ranging_sensor.h"
+#include "logger.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -444,6 +445,7 @@ void StartSendData(void *argument)
 {
   /* USER CODE BEGIN StartSendData */
 	static RANGING_SENSOR_Result_t result;
+	char uart_buffer[128];
   /* Infinite loop */
   for(;;)
   {
@@ -451,6 +453,14 @@ void StartSendData(void *argument)
 
 	  osMessageQueueGet(ToFData_QueueHandle, &result, (uint8_t) 1, osWaitForever);
 	  print_result(&result);
+	  snprintf(uart_buffer, sizeof(uart_buffer),
+	                   "Zone 0: Distance=%lu mm, Status=%d, Signal=%d, Ambient=%d\r\n",
+	                   result.ZoneResult[0].Distance,
+	                   result.ZoneResult[0].Status,
+	                   result.ZoneResult[0].Signal,
+	                   result.ZoneResult[0].Ambient);
+	  HAL_UART_Transmit(&huart1, (uint8_t *)uart_buffer, strlen(uart_buffer), HAL_MAX_DELAY);
+
 
 	   osMutexRelease(myMutex01Handle);
     osDelay(1);
