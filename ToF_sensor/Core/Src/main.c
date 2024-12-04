@@ -19,12 +19,14 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "cmsis_os.h"
+#include "app_tof.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include <stdio.h>
 #include <stdlib.h>
 #include "53l4a2_ranging_sensor.h"
+#include "logger.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -39,12 +41,9 @@ typedef StaticQueue_t osStaticMessageQDef_t;
 
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
-
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
-
-UART_HandleTypeDef huart1;
 
 PCD_HandleTypeDef hpcd_USB_FS;
 
@@ -94,7 +93,6 @@ void SystemClock_Config(void);
 void PeriphCommonClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_USB_PCD_Init(void);
-static void MX_USART1_UART_Init(void);
 void StartDefaultTask(void *argument);
 void StartAck_ToF_Data(void *argument);
 void StartSendData(void *argument);
@@ -151,10 +149,12 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USB_PCD_Init();
-  MX_USART1_UART_Init();
+  MX_TOF_Init();
   /* USER CODE BEGIN 2 */
+
   log_init(&huart1);
   ToF_init();
+
   /* USER CODE END 2 */
 
   /* Init scheduler */
@@ -308,6 +308,7 @@ void PeriphCommonClock_Config(void)
 }
 
 /**
+
   * @brief USART1 Initialization Function
   * @param None
   * @retval None
@@ -356,37 +357,7 @@ static void MX_USART1_UART_Init(void)
 }
 
 /**
-  * @brief USB Initialization Function
-  * @param None
-  * @retval None
-  */
-static void MX_USB_PCD_Init(void)
-{
 
-  /* USER CODE BEGIN USB_Init 0 */
-
-  /* USER CODE END USB_Init 0 */
-
-  /* USER CODE BEGIN USB_Init 1 */
-
-  /* USER CODE END USB_Init 1 */
-  hpcd_USB_FS.Instance = USB;
-  hpcd_USB_FS.Init.dev_endpoints = 8;
-  hpcd_USB_FS.Init.speed = PCD_SPEED_FULL;
-  hpcd_USB_FS.Init.phy_itface = PCD_PHY_EMBEDDED;
-  hpcd_USB_FS.Init.Sof_enable = DISABLE;
-  hpcd_USB_FS.Init.low_power_enable = DISABLE;
-  hpcd_USB_FS.Init.lpm_enable = DISABLE;
-  hpcd_USB_FS.Init.battery_charging_enable = DISABLE;
-  if (HAL_PCD_Init(&hpcd_USB_FS) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  /* USER CODE BEGIN USB_Init 2 */
-
-  /* USER CODE END USB_Init 2 */
-
-}
 
 /**
   * @brief GPIO Initialization Function
@@ -407,12 +378,6 @@ static void MX_GPIO_Init(void)
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOB, LD2_Pin|LD3_Pin|LD1_Pin, GPIO_PIN_RESET);
-
-  /*Configure GPIO pin : B1_Pin */
-  GPIO_InitStruct.Pin = B1_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
-  GPIO_InitStruct.Pull = GPIO_PULLUP;
-  HAL_GPIO_Init(B1_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pins : LD2_Pin LD3_Pin LD1_Pin */
   GPIO_InitStruct.Pin = LD2_Pin|LD3_Pin|LD1_Pin;
@@ -477,6 +442,7 @@ void StartDefaultTask(void *argument)
 void StartAck_ToF_Data(void *argument)
 {
   /* USER CODE BEGIN StartAck_ToF_Data */
+
 	static RANGING_SENSOR_Result_t result;
   /* Infinite loop */
   for(;;)
@@ -484,6 +450,7 @@ void StartAck_ToF_Data(void *argument)
 	  ToF_acquire_data(&result);
 	        osMessageQueuePut(ToFData_QueueHandle, &result, 1, osWaitForever);
 	      osDelay(POLLING_PERIOD);
+
   }
   /* USER CODE END StartAck_ToF_Data */
 }
@@ -499,16 +466,19 @@ void StartSendData(void *argument)
 {
   /* USER CODE BEGIN StartSendData */
 	static RANGING_SENSOR_Result_t result;
+	char uart_buffer[128];
   /* Infinite loop */
   for(;;)
   {
-	  //osMutexAcquire(myMutex01Handle, osWaitForever);
+	  osMutexAcquire(myMutex01Handle, osWaitForever);
 
-	  osMessageQueueGet(ToFData_QueueHandle, &result, 1, osWaitForever);
+	  osMessageQueueGet(ToFData_QueueHandle, &result, (uint8_t) 1, osWaitForever);
 	  print_result(&result);
+
 	  logger_print_result(&result);
 
-	   //osMutexRelease(myMutex01Handle);
+
+	   osMutexRelease(myMutex01Handle);
     osDelay(1);
   }
   /* USER CODE END StartSendData */

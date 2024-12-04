@@ -76,3 +76,5 @@ doc/api/
 
 # Libraries
 /lib
+
+ToF_sensor/Debug/
