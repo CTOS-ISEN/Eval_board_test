@@ -35,8 +35,6 @@ typedef StaticQueue_t osStaticMessageQDef_t;
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-#define TIMING_BUDGET (30U) /* 8 ms < TimingBudget < 200 ms */
-#define POLLING_PERIOD (250U) /* refresh rate for polling mode (ms, shall be consistent with TimingBudget value) */
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -88,9 +86,7 @@ const osMutexAttr_t myMutex01_attributes = {
   .name = "myMutex01"
 };
 /* USER CODE BEGIN PV */
-static RANGING_SENSOR_ProfileConfig_t Profile;
-RANGING_SENSOR_Result_t Result;
-int32_t status = 0;
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -105,8 +101,6 @@ void StartSendData(void *argument);
 
 /* USER CODE BEGIN PFP */
 int _write(int file,char *ptr,int len);
-static void print_result(RANGING_SENSOR_Result_t *Result);
-static int32_t decimal_part(float_t x);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -122,41 +116,6 @@ ITM_SendChar(*ptr++);
 return len;
 }
 
-static void print_result(RANGING_SENSOR_Result_t *Result)
-{
-  uint8_t i;
-  uint8_t j;
-
-  for (i = 0; i < RANGING_SENSOR_MAX_NB_ZONES; i++)
-  {
-    printf("\nTargets = %lu", (unsigned long)Result->ZoneResult[i].NumberOfTargets);
-
-    for (j = 0; j < Result->ZoneResult[i].NumberOfTargets; j++)
-    {
-      printf("\n |---> ");
-
-      printf("Status = %ld, Distance = %5ld mm ",
-             (long)Result->ZoneResult[i].Status[j],
-             (long)Result->ZoneResult[i].Distance[j]);
-
-      if (Profile.EnableAmbient)
-        printf(", Ambient = %ld.%02ld kcps/spad",
-               (long)Result->ZoneResult[i].Ambient[j],
-               (long)decimal_part(Result->ZoneResult[i].Ambient[j]));
-
-      if (Profile.EnableSignal)
-        printf(", Signal = %ld.%02ld kcps/spad",
-               (long)Result->ZoneResult[i].Signal[j],
-               (long)decimal_part(Result->ZoneResult[i].Signal[j]));
-    }
-  }
-  printf("\n");
-}
-static int32_t decimal_part(float_t x)
-{
-  int32_t int_part = (int32_t) x;
-  return (int32_t)((x - int_part) * 100);
-}
 /* USER CODE END 0 */
 
 /**
@@ -194,36 +153,8 @@ int main(void)
   MX_USB_PCD_Init();
   MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
-
-  status = VL53L4A2_RANGING_SENSOR_Init(VL53L4A2_DEV_CENTER);
-  if (status != BSP_ERROR_NONE)
-    {
-      printf("VL53L4A2_RANGING_SENSOR_Init failed\n");
-      Error_Handler();
-    }
-  Profile.RangingProfile = RS_MULTI_TARGET_MEDIUM_RANGE;
-    Profile.TimingBudget = TIMING_BUDGET;
-    Profile.Frequency = 0; /* Induces intermeasurement period, NOT USED for normal ranging */
-    Profile.EnableAmbient = 1; /* Enable: 1, Disable: 0 */
-    Profile.EnableSignal = 1; /* Enable: 1, Disable: 0 */
-    status = VL53L4A2_RANGING_SENSOR_ConfigProfile(VL53L4A2_DEV_CENTER, &Profile);
-    if (status != BSP_ERROR_NONE)
-    {
-        printf("VL53L4A2_RANGING_SENSOR_ConfigProfile failed with status %ld\n", status);
-        Error_Handler();
-    }
-    else
-    {
-        printf("VL53L4A2_RANGING_SENSOR_ConfigProfile succeeded\n");
-    }
-    status = VL53L4A2_RANGING_SENSOR_Start(VL53L4A2_DEV_CENTER, RS_MODE_BLOCKING_CONTINUOUS);
-
-      if (status != BSP_ERROR_NONE)
-      {
-        printf("VL53L4A2_RANGING_SENSOR_Start failed\n");
-        while (1);
-      }
-      //VL53L4A2_RANGING_SENSOR_OffsetCalibration(VL53L4A2_DEV_CENTER, 100);
+  log_init(&huart1);
+  ToF_init();
   /* USER CODE END 2 */
 
   /* Init scheduler */
@@ -393,7 +324,7 @@ static void MX_USART1_UART_Init(void)
   /* USER CODE END USART1_Init 1 */
   huart1.Instance = USART1;
   huart1.Init.BaudRate = 115200;
-  huart1.Init.WordLength = UART_WORDLENGTH_7B;
+  huart1.Init.WordLength = UART_WORDLENGTH_8B;
   huart1.Init.StopBits = UART_STOPBITS_1;
   huart1.Init.Parity = UART_PARITY_NONE;
   huart1.Init.Mode = UART_MODE_TX_RX;
@@ -546,16 +477,12 @@ void StartDefaultTask(void *argument)
 void StartAck_ToF_Data(void *argument)
 {
   /* USER CODE BEGIN StartAck_ToF_Data */
+	static RANGING_SENSOR_Result_t result;
   /* Infinite loop */
   for(;;)
   {
-	  status = VL53L4A2_RANGING_SENSOR_GetDistance(VL53L4A2_DEV_CENTER, &Result);
-	      if (status == BSP_ERROR_NONE)
-	      {
-
-	    	  print_result(&Result);
-	        osMessageQueuePut(ToFData_QueueHandle, &Result, 1, osWaitForever);
-	      }
+	  ToF_acquire_data(&result);
+	        osMessageQueuePut(ToFData_QueueHandle, &result, 1, osWaitForever);
 	      osDelay(POLLING_PERIOD);
   }
   /* USER CODE END StartAck_ToF_Data */
@@ -579,6 +506,7 @@ void StartSendData(void *argument)
 
 	  osMessageQueueGet(ToFData_QueueHandle, &result, 1, osWaitForever);
 	  print_result(&result);
+	  logger_print_result(&result);
 
 	   //osMutexRelease(myMutex01Handle);
     osDelay(1);
