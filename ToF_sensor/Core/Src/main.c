@@ -37,8 +37,6 @@ typedef StaticQueue_t osStaticMessageQDef_t;
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-#define TIMING_BUDGET (30U) /* 8 ms < TimingBudget < 200 ms */
-#define POLLING_PERIOD (250U) /* refresh rate for polling mode (ms, shall be consistent with TimingBudget value) */
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -87,7 +85,7 @@ const osMutexAttr_t myMutex01_attributes = {
   .name = "myMutex01"
 };
 /* USER CODE BEGIN PV */
-int32_t status = 0;
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -154,6 +152,8 @@ int main(void)
   MX_TOF_Init();
   /* USER CODE BEGIN 2 */
 
+  log_init(&huart1);
+  ToF_init();
 
   /* USER CODE END 2 */
 
@@ -308,37 +308,56 @@ void PeriphCommonClock_Config(void)
 }
 
 /**
-  * @brief USB Initialization Function
+
+  * @brief USART1 Initialization Function
   * @param None
   * @retval None
   */
-static void MX_USB_PCD_Init(void)
+static void MX_USART1_UART_Init(void)
 {
 
-  /* USER CODE BEGIN USB_Init 0 */
+  /* USER CODE BEGIN USART1_Init 0 */
 
-  /* USER CODE END USB_Init 0 */
+  /* USER CODE END USART1_Init 0 */
 
-  /* USER CODE BEGIN USB_Init 1 */
+  /* USER CODE BEGIN USART1_Init 1 */
 
-  /* USER CODE END USB_Init 1 */
-  hpcd_USB_FS.Instance = USB;
-  hpcd_USB_FS.Init.dev_endpoints = 8;
-  hpcd_USB_FS.Init.speed = PCD_SPEED_FULL;
-  hpcd_USB_FS.Init.phy_itface = PCD_PHY_EMBEDDED;
-  hpcd_USB_FS.Init.Sof_enable = DISABLE;
-  hpcd_USB_FS.Init.low_power_enable = DISABLE;
-  hpcd_USB_FS.Init.lpm_enable = DISABLE;
-  hpcd_USB_FS.Init.battery_charging_enable = DISABLE;
-  if (HAL_PCD_Init(&hpcd_USB_FS) != HAL_OK)
+  /* USER CODE END USART1_Init 1 */
+  huart1.Instance = USART1;
+  huart1.Init.BaudRate = 115200;
+  huart1.Init.WordLength = UART_WORDLENGTH_8B;
+  huart1.Init.StopBits = UART_STOPBITS_1;
+  huart1.Init.Parity = UART_PARITY_NONE;
+  huart1.Init.Mode = UART_MODE_TX_RX;
+  huart1.Init.HwFlowCtl = UART_HWCONTROL_NONE;
+  huart1.Init.OverSampling = UART_OVERSAMPLING_16;
+  huart1.Init.OneBitSampling = UART_ONE_BIT_SAMPLE_DISABLE;
+  huart1.Init.ClockPrescaler = UART_PRESCALER_DIV1;
+  huart1.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
+  if (HAL_UART_Init(&huart1) != HAL_OK)
   {
     Error_Handler();
   }
-  /* USER CODE BEGIN USB_Init 2 */
+  if (HAL_UARTEx_SetTxFifoThreshold(&huart1, UART_TXFIFO_THRESHOLD_1_8) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  if (HAL_UARTEx_SetRxFifoThreshold(&huart1, UART_RXFIFO_THRESHOLD_1_8) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  if (HAL_UARTEx_DisableFifoMode(&huart1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN USART1_Init 2 */
 
-  /* USER CODE END USB_Init 2 */
+  /* USER CODE END USART1_Init 2 */
 
 }
+
+/**
+
 
 /**
   * @brief GPIO Initialization Function
@@ -423,13 +442,15 @@ void StartDefaultTask(void *argument)
 void StartAck_ToF_Data(void *argument)
 {
   /* USER CODE BEGIN StartAck_ToF_Data */
-	RANGING_SENSOR_Result_t result;
+
+	static RANGING_SENSOR_Result_t result;
   /* Infinite loop */
   for(;;)
   {
-	  MX_TOF_Process(&result);
-	  osMessageQueuePut(ToFData_QueueHandle, &result, 1, osWaitForever);
-	  osDelay(POLLING_PERIOD);
+	  ToF_acquire_data(&result);
+	        osMessageQueuePut(ToFData_QueueHandle, &result, 1, osWaitForever);
+	      osDelay(POLLING_PERIOD);
+
   }
   /* USER CODE END StartAck_ToF_Data */
 }
@@ -453,13 +474,8 @@ void StartSendData(void *argument)
 
 	  osMessageQueueGet(ToFData_QueueHandle, &result, (uint8_t) 1, osWaitForever);
 	  print_result(&result);
-	  snprintf(uart_buffer, sizeof(uart_buffer),
-	                   "Zone 0: Distance=%lu mm, Status=%d, Signal=%d, Ambient=%d\r\n",
-	                   result.ZoneResult[0].Distance,
-	                   result.ZoneResult[0].Status,
-	                   result.ZoneResult[0].Signal,
-	                   result.ZoneResult[0].Ambient);
-	  HAL_UART_Transmit(&huart1, (uint8_t *)uart_buffer, strlen(uart_buffer), HAL_MAX_DELAY);
+
+	  logger_print_result(&result);
 
 
 	   osMutexRelease(myMutex01Handle);
