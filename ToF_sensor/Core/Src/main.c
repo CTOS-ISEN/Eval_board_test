@@ -44,6 +44,9 @@ typedef StaticQueue_t osStaticMessageQDef_t;
 
 /* Private variables ---------------------------------------------------------*/
 
+TIM_HandleTypeDef htim2;
+TIM_HandleTypeDef htim16;
+
 UART_HandleTypeDef huart1;
 
 PCD_HandleTypeDef hpcd_USB_FS;
@@ -53,7 +56,7 @@ osThreadId_t defaultTaskHandle;
 const osThreadAttr_t defaultTask_attributes = {
   .name = "defaultTask",
   .priority = (osPriority_t) osPriorityNormal,
-  .stack_size = 128 * 4
+  .stack_size = 256 * 4
 };
 /* Definitions for Ack_ToF_Data */
 osThreadId_t Ack_ToF_DataHandle;
@@ -69,6 +72,20 @@ const osThreadAttr_t SendData_attributes = {
   .priority = (osPriority_t) osPriorityLow,
   .stack_size = 512 * 4
 };
+/* Definitions for Ack_LSM6DSO_Dat */
+osThreadId_t Ack_LSM6DSO_DatHandle;
+const osThreadAttr_t Ack_LSM6DSO_Dat_attributes = {
+  .name = "Ack_LSM6DSO_Dat",
+  .priority = (osPriority_t) osPriorityLow,
+  .stack_size = 256 * 4
+};
+/* Definitions for SendDataLSM6 */
+osThreadId_t SendDataLSM6Handle;
+const osThreadAttr_t SendDataLSM6_attributes = {
+  .name = "SendDataLSM6",
+  .priority = (osPriority_t) osPriorityLow,
+  .stack_size = 256 * 4
+};
 /* Definitions for ToFData_Queue */
 osMessageQueueId_t ToFData_QueueHandle;
 uint8_t ToFData_QueueBuffer[ 16 * sizeof( RANGING_SENSOR_Result_t ) ];
@@ -80,10 +97,16 @@ const osMessageQueueAttr_t ToFData_Queue_attributes = {
   .mq_mem = &ToFData_QueueBuffer,
   .mq_size = sizeof(ToFData_QueueBuffer)
 };
-/* Definitions for myMutex01 */
-osMutexId_t myMutex01Handle;
-const osMutexAttr_t myMutex01_attributes = {
-  .name = "myMutex01"
+/* Definitions for LSM6DSOData_Queue */
+osMessageQueueId_t LSM6DSOData_QueueHandle;
+uint8_t LSM6DSOData_QueueBuffer[ 16 * sizeof( LSM6DSO_data ) ];
+osStaticMessageQDef_t LSM6DSOData_QueueControlBlock;
+const osMessageQueueAttr_t LSM6DSOData_Queue_attributes = {
+  .name = "LSM6DSOData_Queue",
+  .cb_mem = &LSM6DSOData_QueueControlBlock,
+  .cb_size = sizeof(LSM6DSOData_QueueControlBlock),
+  .mq_mem = &LSM6DSOData_QueueBuffer,
+  .mq_size = sizeof(LSM6DSOData_QueueBuffer)
 };
 /* USER CODE BEGIN PV */
 
@@ -95,9 +118,13 @@ void PeriphCommonClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_USB_PCD_Init(void);
 static void MX_USART1_UART_Init(void);
+static void MX_TIM2_Init(void);
+static void MX_TIM16_Init(void);
 void StartDefaultTask(void *argument);
 void StartAck_ToF_Data(void *argument);
 void StartSendData(void *argument);
+void StartAck_LSM6DSO_Data(void *argument);
+void StartSendDataLSM6(void *argument);
 
 /* USER CODE BEGIN PFP */
 int _write(int file,char *ptr,int len);
@@ -152,18 +179,26 @@ int main(void)
   MX_GPIO_Init();
   MX_USB_PCD_Init();
   MX_USART1_UART_Init();
+  MX_TIM2_Init();
+  MX_TIM16_Init();
   /* USER CODE BEGIN 2 */
 
   log_init(&huart1);
   ToF_init();
+  IKS01A3_MOTION_SENSOR_Init(IKS01A3_LSM6DSO_0, MOTION_GYRO);
+    IKS01A3_MOTION_SENSOR_Init(1, MOTION_ACCELERO);
 
+    IKS01A3_MOTION_SENSOR_Enable(IKS01A3_LSM6DSO_0, MOTION_GYRO);
+    IKS01A3_MOTION_SENSOR_Enable(1, MOTION_ACCELERO);
+
+      //IKS01A3_LIS2DW12_0;
+      CalibrationLSM6DSO();
+      HAL_TIM_Base_Start_IT(&htim16);
+      HAL_TIM_Base_Start_IT(&htim2);
   /* USER CODE END 2 */
 
   /* Init scheduler */
   osKernelInitialize();
-  /* Create the mutex(es) */
-  /* creation of myMutex01 */
-  myMutex01Handle = osMutexNew(&myMutex01_attributes);
 
   /* USER CODE BEGIN RTOS_MUTEX */
   /* add mutexes, ... */
@@ -181,6 +216,9 @@ int main(void)
   /* creation of ToFData_Queue */
   ToFData_QueueHandle = osMessageQueueNew (16, sizeof(RANGING_SENSOR_Result_t), &ToFData_Queue_attributes);
 
+  /* creation of LSM6DSOData_Queue */
+  LSM6DSOData_QueueHandle = osMessageQueueNew (16, sizeof(LSM6DSO_data), &LSM6DSOData_Queue_attributes);
+
   /* USER CODE BEGIN RTOS_QUEUES */
   /* add queues, ... */
   /* USER CODE END RTOS_QUEUES */
@@ -194,6 +232,12 @@ int main(void)
 
   /* creation of SendData */
   SendDataHandle = osThreadNew(StartSendData, NULL, &SendData_attributes);
+
+  /* creation of Ack_LSM6DSO_Dat */
+  Ack_LSM6DSO_DatHandle = osThreadNew(StartAck_LSM6DSO_Data, NULL, &Ack_LSM6DSO_Dat_attributes);
+
+  /* creation of SendDataLSM6 */
+  SendDataLSM6Handle = osThreadNew(StartSendDataLSM6, NULL, &SendDataLSM6_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
@@ -307,6 +351,83 @@ void PeriphCommonClock_Config(void)
   /* USER CODE BEGIN Smps */
 
   /* USER CODE END Smps */
+}
+
+/**
+  * @brief TIM2 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_TIM2_Init(void)
+{
+
+  /* USER CODE BEGIN TIM2_Init 0 */
+
+  /* USER CODE END TIM2_Init 0 */
+
+  TIM_ClockConfigTypeDef sClockSourceConfig = {0};
+  TIM_MasterConfigTypeDef sMasterConfig = {0};
+
+  /* USER CODE BEGIN TIM2_Init 1 */
+
+  /* USER CODE END TIM2_Init 1 */
+  htim2.Instance = TIM2;
+  htim2.Init.Prescaler = 31999;
+  htim2.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim2.Init.Period = 15999;
+  htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim2.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  if (HAL_TIM_Base_Init(&htim2) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
+  if (HAL_TIM_ConfigClockSource(&htim2, &sClockSourceConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+  if (HAL_TIMEx_MasterConfigSynchronization(&htim2, &sMasterConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN TIM2_Init 2 */
+
+  /* USER CODE END TIM2_Init 2 */
+
+}
+
+/**
+  * @brief TIM16 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_TIM16_Init(void)
+{
+
+  /* USER CODE BEGIN TIM16_Init 0 */
+
+  /* USER CODE END TIM16_Init 0 */
+
+  /* USER CODE BEGIN TIM16_Init 1 */
+
+  /* USER CODE END TIM16_Init 1 */
+  htim16.Instance = TIM16;
+  htim16.Init.Prescaler = 31999;
+  htim16.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim16.Init.Period = 999;
+  htim16.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim16.Init.RepetitionCounter = 0;
+  htim16.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  if (HAL_TIM_Base_Init(&htim16) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN TIM16_Init 2 */
+
+  /* USER CODE END TIM16_Init 2 */
+
 }
 
 /**
@@ -484,9 +605,10 @@ void StartAck_ToF_Data(void *argument)
   /* Infinite loop */
   for(;;)
   {
+	  osThreadFlagsWait(1, osFlagsWaitAny, osWaitForever);
 	  ToF_acquire_data(&result);
 	        osMessageQueuePut(ToFData_QueueHandle, &result, 1, osWaitForever);
-	      osDelay(POLLING_PERIOD);
+	      osDelay(1);
 
   }
   /* USER CODE END StartAck_ToF_Data */
@@ -506,18 +628,82 @@ void StartSendData(void *argument)
   /* Infinite loop */
   for(;;)
   {
-	  osMutexAcquire(myMutex01Handle, osWaitForever);
+	  osThreadFlagsWait(1, osFlagsWaitAny, osWaitForever);
 
-	  osMessageQueueGet(ToFData_QueueHandle, &result, (uint8_t) 1, osWaitForever);
-	  print_result(&result);
+	  while(osMessageQueueGetCount(ToFData_QueueHandle)>0){
 
-	  logger_print_result(&result);
+			osMessageQueueGet(ToFData_QueueHandle, &result, (uint8_t*) 1,osWaitForever);
+			print_result(&result);
 
+			//logger_print_result(&result);
+		}
 
-	   osMutexRelease(myMutex01Handle);
     osDelay(1);
   }
   /* USER CODE END StartSendData */
+}
+
+/* USER CODE BEGIN Header_StartAck_LSM6DSO_Data */
+/**
+* @brief Function implementing the Ack_LSM6DSO_Dat thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_StartAck_LSM6DSO_Data */
+void StartAck_LSM6DSO_Data(void *argument)
+{
+  /* USER CODE BEGIN StartAck_LSM6DSO_Data */
+  /* Infinite loop */
+  for(;;)
+  {
+		osThreadFlagsWait(1, osFlagsWaitAny, osWaitForever);
+		LSM6DSO_data mov_data;
+		mov_data = InitLSM6DSO_Struct(mov_data);
+		IKS01A3_MOTION_SENSOR_GetAxes(IKS01A3_LSM6DSO_0, MOTION_GYRO,
+				&mov_data.axes_gyro);
+		IKS01A3_MOTION_SENSOR_GetAxes(1, MOTION_ACCELERO, &mov_data.axes_acce);
+		mov_data = CalibratedGet(mov_data);
+		printf(
+				"Xgyro: %ld | Ygyro: %ld | Zgyro: %ld | Xacc: %ld | Yacc: %ld | Zacc: %ld\n",
+				mov_data.axes_gyro.x, mov_data.axes_gyro.y,
+				mov_data.axes_gyro.z, mov_data.axes_acce.x,
+				mov_data.axes_acce.y, mov_data.axes_acce.z);
+		printf("Get at : %ld\n", osKernelGetTickCount());
+		osMessageQueuePut(LSM6DSOData_QueueHandle, &mov_data, 1, osWaitForever);
+		osDelay(1);
+  }
+  /* USER CODE END StartAck_LSM6DSO_Data */
+}
+
+/* USER CODE BEGIN Header_StartSendDataLSM6 */
+/**
+* @brief Function implementing the SendDataLSM6 thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_StartSendDataLSM6 */
+void StartSendDataLSM6(void *argument)
+{
+  /* USER CODE BEGIN StartSendDataLSM6 */
+  /* Infinite loop */
+  for(;;)
+  {
+		osThreadFlagsWait(1, osFlagsWaitAny, osWaitForever);
+		LSM6DSO_data send_data;
+		for (int i = 0; i < 16; i++) {
+			send_data = InitLSM6DSO_Struct(send_data);
+			osMessageQueueGet(LSM6DSOData_QueueHandle, &send_data, (uint8_t*) 1,
+					osWaitForever);
+			printf(
+					"SEND : Xgyro: %ld | Ygyro: %ld | Zgyro: %ld | Xacc: %ld | Yacc: %ld | Zacc: %ld\n",
+					send_data.axes_gyro.x, send_data.axes_gyro.y,
+					send_data.axes_gyro.z, send_data.axes_acce.x,
+					send_data.axes_acce.y, send_data.axes_acce.z);
+		}
+		printf("Send at : %ld\n", osKernelGetTickCount());
+		osDelay(1);
+  }
+  /* USER CODE END StartSendDataLSM6 */
 }
 
 /**
@@ -531,7 +717,14 @@ void StartSendData(void *argument)
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
   /* USER CODE BEGIN Callback 0 */
+	if (htim->Instance == TIM16) {
+			osThreadFlagsSet(Ack_LSM6DSO_DatHandle, 1);
+			osThreadFlagsSet(Ack_ToF_DataHandle,1);
 
+	}else if(htim->Instance == TIM2){
+			osThreadFlagsSet(SendDataLSM6Handle, 1);
+			osThreadFlagsSet(SendDataHandle, 1);
+	}
   /* USER CODE END Callback 0 */
   if (htim->Instance == TIM17) {
     HAL_IncTick();
