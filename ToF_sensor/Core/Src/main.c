@@ -108,6 +108,11 @@ const osMessageQueueAttr_t LSM6DSOData_Queue_attributes = {
   .mq_mem = &LSM6DSOData_QueueBuffer,
   .mq_size = sizeof(LSM6DSOData_QueueBuffer)
 };
+/* Definitions for MutexSend */
+osMutexId_t MutexSendHandle;
+const osMutexAttr_t MutexSend_attributes = {
+  .name = "MutexSend"
+};
 /* USER CODE BEGIN PV */
 
 /* USER CODE END PV */
@@ -199,6 +204,9 @@ int main(void)
 
   /* Init scheduler */
   osKernelInitialize();
+  /* Create the mutex(es) */
+  /* creation of MutexSend */
+  MutexSendHandle = osMutexNew(&MutexSend_attributes);
 
   /* USER CODE BEGIN RTOS_MUTEX */
   /* add mutexes, ... */
@@ -629,7 +637,7 @@ void StartSendData(void *argument)
   for(;;)
   {
 	  osThreadFlagsWait(1, osFlagsWaitAny, osWaitForever);
-
+	  osMutexAcquire(MutexSendHandle, osWaitForever);
 	  while(osMessageQueueGetCount(ToFData_QueueHandle)>0){
 
 			osMessageQueueGet(ToFData_QueueHandle, &result, (uint8_t*) 1,osWaitForever);
@@ -637,6 +645,7 @@ void StartSendData(void *argument)
 
 			//logger_print_result(&result);
 		}
+	  osMutexRelease(MutexSendHandle);
 
     osDelay(1);
   }
@@ -689,6 +698,7 @@ void StartSendDataLSM6(void *argument)
   for(;;)
   {
 		osThreadFlagsWait(1, osFlagsWaitAny, osWaitForever);
+		osMutexAcquire(MutexSendHandle, osWaitForever);
 		LSM6DSO_data send_data;
 		for (int i = 0; i < 16; i++) {
 			send_data = InitLSM6DSO_Struct(send_data);
@@ -701,6 +711,7 @@ void StartSendDataLSM6(void *argument)
 					send_data.axes_acce.y, send_data.axes_acce.z);
 		}
 		printf("Send at : %ld\n", osKernelGetTickCount());
+		osMutexRelease(MutexSendHandle);
 		osDelay(1);
   }
   /* USER CODE END StartSendDataLSM6 */
