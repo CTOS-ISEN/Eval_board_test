@@ -641,9 +641,9 @@ void StartSendData(void *argument)
 	  while(osMessageQueueGetCount(ToFData_QueueHandle)>0){
 
 			osMessageQueueGet(ToFData_QueueHandle, &result, (uint8_t*) 1,osWaitForever);
-			print_result(&result);
+			//print_result(&result);
 
-			//logger_print_result(&result);
+			logger_print_result(&result);
 		}
 	  osMutexRelease(MutexSendHandle);
 
@@ -672,12 +672,12 @@ void StartAck_LSM6DSO_Data(void *argument)
 				&mov_data.axes_gyro);
 		IKS01A3_MOTION_SENSOR_GetAxes(1, MOTION_ACCELERO, &mov_data.axes_acce);
 		mov_data = CalibratedGet(mov_data);
-		printf(
+		/*printf(
 				"Xgyro: %ld | Ygyro: %ld | Zgyro: %ld | Xacc: %ld | Yacc: %ld | Zacc: %ld\n",
 				mov_data.axes_gyro.x, mov_data.axes_gyro.y,
 				mov_data.axes_gyro.z, mov_data.axes_acce.x,
 				mov_data.axes_acce.y, mov_data.axes_acce.z);
-		printf("Get at : %ld\n", osKernelGetTickCount());
+		printf("Get at : %ld\n", osKernelGetTickCount());*/
 		osMessageQueuePut(LSM6DSOData_QueueHandle, &mov_data, 1, osWaitForever);
 		osDelay(1);
   }
@@ -700,11 +700,11 @@ void StartSendDataLSM6(void *argument)
 		osThreadFlagsWait(1, osFlagsWaitAny, osWaitForever);
 		osMutexAcquire(MutexSendHandle, osWaitForever);
 		LSM6DSO_data send_data;
-		for (int i = 0; i < 16; i++) {
+		while(osMessageQueueGetCount(LSM6DSOData_QueueHandle)>0) {
 			send_data = InitLSM6DSO_Struct(send_data);
 			osMessageQueueGet(LSM6DSOData_QueueHandle, &send_data, (uint8_t*) 1,
 					osWaitForever);
-			printf(
+			log_printf(
 					"SEND : Xgyro: %ld | Ygyro: %ld | Zgyro: %ld | Xacc: %ld | Yacc: %ld | Zacc: %ld\n",
 					send_data.axes_gyro.x, send_data.axes_gyro.y,
 					send_data.axes_gyro.z, send_data.axes_acce.x,
