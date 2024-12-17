@@ -2,12 +2,11 @@
   ******************************************************************************
   * @file    ranging_sensor.h
   * @author  IMG SW Application Team
-  * @brief   This header file contains the common defines and functions prototypes
-  *          for the ranging sensor driver.
+  * @brief   This header file contains definitions for ranging sensors
   ******************************************************************************
   * @attention
   *
-  * Copyright (c) 2021 STMicroelectronics.
+  * Copyright (c) 2023 STMicroelectronics.
   * All rights reserved.
   *
   * This software is licensed under terms that can be found in the LICENSE file
@@ -16,7 +15,6 @@
   *
   ******************************************************************************
   */
-
 /* Define to prevent recursive inclusion -------------------------------------*/
 #ifndef RANGING_SENSOR_H
 #define RANGING_SENSOR_H
@@ -53,10 +51,10 @@ typedef struct
   int32_t (*ConfigROI)(void *, void *);
   int32_t (*ConfigIT)(void *, void *);
   int32_t (*GetDistance)(void *, void *);
-  int32_t (*Start)(void *, uint32_t);
+  int32_t (*Start)(void *, uint8_t);
   int32_t (*Stop)(void *);
-  int32_t (*SetAddress)(void *, uint32_t);
-  int32_t (*GetAddress)(void *, uint32_t *);
+  int32_t (*SetAddress)(void *, uint16_t);
+  int32_t (*GetAddress)(void *, uint16_t *);
   int32_t (*SetPowerMode)(void *, uint32_t);
   int32_t (*GetPowerMode)(void *, uint32_t *);
 } RANGING_SENSOR_Drv_t;

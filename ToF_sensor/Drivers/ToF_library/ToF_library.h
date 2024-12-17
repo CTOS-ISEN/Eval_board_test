@@ -8,10 +8,9 @@
 #ifndef TOF_LIBRARY_TOF_LIBRARY_H_
 #define TOF_LIBRARY_TOF_LIBRARY_H_
 
-#include "53l4a2_ranging_sensor.h"
 #include "main.h"
 #include "logger.h"
-
+#include "custom_ranging_sensor.h"
 
 #define TIMING_BUDGET (30U) /* 8 ms < TimingBudget < 200 ms */
 #define POLLING_PERIOD (250U) /* refresh rate for polling mode (ms, shall be consistent with TimingBudget value) */
