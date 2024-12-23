@@ -24,7 +24,6 @@
 /* USER CODE BEGIN Includes */
 #include <stdio.h>
 #include <stdlib.h>
-#include "53l4a2_ranging_sensor.h"
 #include "logger.h"
 /* USER CODE END Includes */
 

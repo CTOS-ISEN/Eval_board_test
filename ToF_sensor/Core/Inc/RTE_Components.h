@@ -25,6 +25,7 @@
 /* STMicroelectronics.X-CUBE-MEMS1.11.0.0 */
 #define IKS01A3
 /* STMicroelectronics.X-CUBE-TOF1.3.4.2 */
-#define _53L4A2
+#define VL53L4CX
+#define BSP_RANGING_SENSOR
 
 #endif /* __RTE_COMPONENTS_H__ */

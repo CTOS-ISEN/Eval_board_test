@@ -14,11 +14,10 @@ int32_t status = 0;
 static int32_t decimal_part(float_t x);
 
 void ToF_init(void){
-	uint32_t cal_distance_mm = 100; /* target distance used for offset calibration */
 	  	printf("CTOS ToF Sensor \n");
 
 	  	//initialisation du sensor
-	  	status = VL53L4A2_RANGING_SENSOR_Init(VL53L4A2_DEV_CENTER);
+	  	status = CUSTOM_RANGING_SENSOR_Init(CUSTOM_VL53L4CX);
 
 	  	/*if (status != BSP_ERROR_NONE)
 	  	 {
@@ -32,7 +31,7 @@ void ToF_init(void){
 	  	Profile.EnableSignal = 1; /* Enable: 1, Disable: 0 */
 
 	  	//Configuration of the sensor
-	  	status = VL53L4A2_RANGING_SENSOR_ConfigProfile(VL53L4A2_DEV_CENTER,&Profile);
+	  	status = CUSTOM_RANGING_SENSOR_ConfigProfile(CUSTOM_VL53L4CX,&Profile);
 
 	  	if (status != BSP_ERROR_NONE) {
 
@@ -45,7 +44,8 @@ void ToF_init(void){
 	  	}
 
 	  	//Start the ToF sensor on the central board in blocking continuous mode
-	  	status = VL53L4A2_RANGING_SENSOR_Start(VL53L4A2_DEV_CENTER,RS_MODE_BLOCKING_CONTINUOUS);
+
+	  	status = CUSTOM_RANGING_SENSOR_Start(CUSTOM_VL53L4CX,RS_MODE_BLOCKING_CONTINUOUS);
 
 	  	if (status != BSP_ERROR_NONE) {
 	  		printf("VL53L4A2_RANGING_SENSOR_Start failed\n");
@@ -55,7 +55,8 @@ void ToF_init(void){
 
 	  	//Data collection for Calibration of the sensor
 	  	for (int i = 0; i < 10; i++) {
-	  		status = VL53L4A2_RANGING_SENSOR_GetDistance(VL53L4A2_DEV_CENTER,
+
+	  		status = CUSTOM_RANGING_SENSOR_GetDistance(CUSTOM_VL53L4CX,
 	  				&Result);
 
 	  		if (status == BSP_ERROR_NONE) {
@@ -64,16 +65,17 @@ void ToF_init(void){
 
 	  		HAL_Delay(POLLING_PERIOD);
 	  	}
-	  	VL53L4A2_RANGING_SENSOR_Stop(VL53L4A2_DEV_CENTER);
-	  	//Calibration of the module using data collected during calibration period
-	  	VL53L4A2_RANGING_SENSOR_OffsetCalibration(VL53L4A2_DEV_CENTER, cal_distance_mm);
+
+	  	CUSTOM_RANGING_SENSOR_Stop(CUSTOM_VL53L4CX);
+
 
 	  	//Start the ToF sensor on the central board in blocking continuous mode
-	  	status = VL53L4A2_RANGING_SENSOR_Start(VL53L4A2_DEV_CENTER, RS_MODE_BLOCKING_CONTINUOUS);
+	  	status = CUSTOM_RANGING_SENSOR_Start(CUSTOM_VL53L4CX, RS_MODE_BLOCKING_CONTINUOUS);
+
 
 	  	//if error are detected a message is returned
 	  	if (status != BSP_ERROR_NONE) {
-	  		printf("VL53L4A2_RANGING_SENSOR_Start failed\n");
+	  		printf("RANGING_SENSOR_Start failed\n");
 	  		while (1)
 	  			;
 	  	}
@@ -81,7 +83,7 @@ void ToF_init(void){
 
 void ToF_acquire_data(RANGING_SENSOR_Result_t* result) {
 
-	status = VL53L4A2_RANGING_SENSOR_GetDistance(VL53L4A2_DEV_CENTER, result);
+	status = CUSTOM_RANGING_SENSOR_GetDistance(CUSTOM_VL53L4CX, result);
 	if(status != BSP_ERROR_NONE){
 		Error_Handler();
 	}
