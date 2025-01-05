@@ -33,6 +33,8 @@ extern "C" {
 /* USER CODE BEGIN Includes */
 #include "ToF_library.h"
 #include "MEMS_library.h"
+#include "GNSS_library.h"
+#include "teseo_liv3f.h"
 /* USER CODE END Includes */
 
 /* Exported types ------------------------------------------------------------*/

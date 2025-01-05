@@ -85,6 +85,20 @@ const osThreadAttr_t SendDataLSM6_attributes = {
   .priority = (osPriority_t) osPriorityLow,
   .stack_size = 256 * 4
 };
+/* Definitions for BackTaskGNSS */
+osThreadId_t BackTaskGNSSHandle;
+const osThreadAttr_t BackTaskGNSS_attributes = {
+  .name = "BackTaskGNSS",
+  .priority = (osPriority_t) osPriorityLow,
+  .stack_size = 128 * 4
+};
+/* Definitions for ParserTaskGNSS */
+osThreadId_t ParserTaskGNSSHandle;
+const osThreadAttr_t ParserTaskGNSS_attributes = {
+  .name = "ParserTaskGNSS",
+  .priority = (osPriority_t) osPriorityLow,
+  .stack_size = 1024 * 4
+};
 /* Definitions for ToFData_Queue */
 osMessageQueueId_t ToFData_QueueHandle;
 uint8_t ToFData_QueueBuffer[ 16 * sizeof( RANGING_SENSOR_Result_t ) ];
@@ -112,7 +126,14 @@ osMutexId_t MutexSendHandle;
 const osMutexAttr_t MutexSend_attributes = {
   .name = "MutexSend"
 };
+/* Definitions for GNSSMutex */
+osMutexId_t GNSSMutexHandle;
+const osMutexAttr_t GNSSMutex_attributes = {
+  .name = "GNSSMutex"
+};
 /* USER CODE BEGIN PV */
+
+static GNSSParser_Data_t GNSSParser_Data;
 
 /* USER CODE END PV */
 
@@ -129,6 +150,8 @@ void StartAck_ToF_Data(void *argument);
 void StartSendData(void *argument);
 void StartAck_LSM6DSO_Data(void *argument);
 void StartSendDataLSM6(void *argument);
+void gnssBackground(void *argument);
+void DataParserTask(void *argument);
 
 /* USER CODE BEGIN PFP */
 int _write(int file,char *ptr,int len);
@@ -207,6 +230,9 @@ int main(void)
   /* creation of MutexSend */
   MutexSendHandle = osMutexNew(&MutexSend_attributes);
 
+  /* creation of GNSSMutex */
+  GNSSMutexHandle = osMutexNew(&GNSSMutex_attributes);
+
   /* USER CODE BEGIN RTOS_MUTEX */
   /* add mutexes, ... */
   /* USER CODE END RTOS_MUTEX */
@@ -245,6 +271,12 @@ int main(void)
 
   /* creation of SendDataLSM6 */
   SendDataLSM6Handle = osThreadNew(StartSendDataLSM6, NULL, &SendDataLSM6_attributes);
+
+  /* creation of BackTaskGNSS */
+  BackTaskGNSSHandle = osThreadNew(gnssBackground, NULL, &BackTaskGNSS_attributes);
+
+  /* creation of ParserTaskGNSS */
+  ParserTaskGNSSHandle = osThreadNew(DataParserTask, NULL, &ParserTaskGNSS_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
@@ -714,6 +746,78 @@ void StartSendDataLSM6(void *argument)
 		osDelay(1);
   }
   /* USER CODE END StartSendDataLSM6 */
+}
+
+/* USER CODE BEGIN Header_gnssBackground */
+/**
+* @brief Function implementing the BackTaskGNSS thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_gnssBackground */
+void gnssBackground(void *argument)
+{
+  /* USER CODE BEGIN gnssBackground */
+  /* Infinite loop */
+  for(;;)
+  {
+	  GNSS1A1_GNSS_BackgroundProcess(GNSS1A1_TESEO_LIV3F);
+    osDelay(100);
+  }
+  /* USER CODE END gnssBackground */
+}
+
+/* USER CODE BEGIN Header_DataParserTask */
+/**
+* @brief Function implementing the ParserTaskGNSS thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_DataParserTask */
+void DataParserTask(void *argument)
+{
+  /* USER CODE BEGIN DataParserTask */
+	const GNSS1A1_GNSS_Msg_t *gnssMsg = NULL;
+		GNSSParser_Status_t status, check;
+
+		if (GNSS1A1_GNSS_Init(GNSS1A1_TESEO_LIV3F) != BSP_ERROR_NONE) {
+			__BKPT();
+		}
+
+	//	GNSSData_Mutex_Init();
+		GNSS_PARSER_Init(&GNSSParser_Data);
+  /* Infinite loop */
+  for(;;)
+  {
+
+		gnssMsg = GNSS1A1_GNSS_GetMessage(GNSS1A1_TESEO_LIV3F);
+		if (gnssMsg == NULL) {
+			continue;
+		}
+
+		check = GNSS_PARSER_CheckSanity((uint8_t*) gnssMsg->buf, gnssMsg->len);
+
+		if (check != GNSS_PARSER_ERROR) {
+			for (int m = 0; m < NMEA_MSGS_NUM; m++) {
+				osMutexWait(GNSSMutexHandle, osWaitForever);
+				status = GNSS_PARSER_ParseMsg(&GNSSParser_Data, (eNMEAMsg) m,
+						(uint8_t*) gnssMsg->buf);
+				osMutexRelease(GNSSMutexHandle);
+
+				if ((status != GNSS_PARSER_ERROR)) {
+
+					print_GPRMC(&GNSSParser_Data);
+
+				}
+
+			}
+		}
+
+		GNSS1A1_GNSS_ReleaseMessage(GNSS1A1_TESEO_LIV3F, gnssMsg);
+
+		osDelay(1000);
+  }
+  /* USER CODE END DataParserTask */
 }
 
 /**
