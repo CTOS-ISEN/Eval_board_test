@@ -1,0 +1,3 @@
+../Drivers/MEMS_library/MEMS_library.c:12:6:MyInitLSM6DSO	40	static
+../Drivers/MEMS_library/MEMS_library.c:27:6:MyEnableLSM6DSO	8	static
+../Drivers/MEMS_library/MEMS_library.c:32:6:MyGettingLSM6DSO	16	static
