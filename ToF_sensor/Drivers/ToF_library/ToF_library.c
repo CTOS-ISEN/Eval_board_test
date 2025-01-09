@@ -85,6 +85,7 @@ void ToF_acquire_data(RANGING_SENSOR_Result_t* result) {
 
 	status = CUSTOM_RANGING_SENSOR_GetDistance(CUSTOM_VL53L4CX, result);
 	if(status != BSP_ERROR_NONE){
+		printf("current status : %ld \n",status);
 		Error_Handler();
 	}
 }

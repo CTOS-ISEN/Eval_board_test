@@ -97,7 +97,21 @@ osThreadId_t ParserTaskGNSSHandle;
 const osThreadAttr_t ParserTaskGNSS_attributes = {
   .name = "ParserTaskGNSS",
   .priority = (osPriority_t) osPriorityLow,
-  .stack_size = 1024 * 4
+  .stack_size = 128 * 4
+};
+/* Definitions for printGPRMC */
+osThreadId_t printGPRMCHandle;
+const osThreadAttr_t printGPRMC_attributes = {
+  .name = "printGPRMC",
+  .priority = (osPriority_t) osPriorityLow,
+  .stack_size = 128 * 4
+};
+/* Definitions for printGPGGA */
+osThreadId_t printGPGGAHandle;
+const osThreadAttr_t printGPGGA_attributes = {
+  .name = "printGPGGA",
+  .priority = (osPriority_t) osPriorityLow,
+  .stack_size = 128 * 4
 };
 /* Definitions for ToFData_Queue */
 osMessageQueueId_t ToFData_QueueHandle;
@@ -133,7 +147,7 @@ const osMutexAttr_t GNSSMutex_attributes = {
 };
 /* USER CODE BEGIN PV */
 
-static GNSSParser_Data_t GNSSParser_Data;
+static GNSSParser_Data_t parsed_GNSSData;
 
 /* USER CODE END PV */
 
@@ -152,6 +166,8 @@ void StartAck_LSM6DSO_Data(void *argument);
 void StartSendDataLSM6(void *argument);
 void gnssBackground(void *argument);
 void DataParserTask(void *argument);
+void startPrintGPRMC(void *argument);
+void startPrintGPGGA(void *argument);
 
 /* USER CODE BEGIN PFP */
 int _write(int file,char *ptr,int len);
@@ -209,6 +225,8 @@ int main(void)
   MX_TIM2_Init();
   MX_TIM16_Init();
   /* USER CODE BEGIN 2 */
+  HAL_GPIO_WritePin(RST_GNSS_GPIO_Port, RST_GNSS_Pin, RESET);
+  HAL_GPIO_WritePin(WKP_GNSS_GPIO_Port, WKP_GNSS_Pin, SET);
 
   log_init(&huart1);
   ToF_init();
@@ -277,6 +295,12 @@ int main(void)
 
   /* creation of ParserTaskGNSS */
   ParserTaskGNSSHandle = osThreadNew(DataParserTask, NULL, &ParserTaskGNSS_attributes);
+
+  /* creation of printGPRMC */
+  printGPRMCHandle = osThreadNew(startPrintGPRMC, NULL, &printGPRMC_attributes);
+
+  /* creation of printGPGGA */
+  printGPGGAHandle = osThreadNew(startPrintGPGGA, NULL, &printGPGGA_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
@@ -568,7 +592,27 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOD_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(RST_GNSS_GPIO_Port, RST_GNSS_Pin, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(WKP_GNSS_GPIO_Port, WKP_GNSS_Pin, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOB, LD2_Pin|LD3_Pin|LD1_Pin, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin : RST_GNSS_Pin */
+  GPIO_InitStruct.Pin = RST_GNSS_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(RST_GNSS_GPIO_Port, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : WKP_GNSS_Pin */
+  GPIO_InitStruct.Pin = WKP_GNSS_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(WKP_GNSS_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pin : B1_Pin */
   GPIO_InitStruct.Pin = B1_Pin;
@@ -672,7 +716,7 @@ void StartSendData(void *argument)
 	  while(osMessageQueueGetCount(ToFData_QueueHandle)>0){
 
 			osMessageQueueGet(ToFData_QueueHandle, &result, (uint8_t*) 1,osWaitForever);
-			//print_result(&result);
+			print_result(&result);
 
 			logger_print_result(&result);
 		}
@@ -761,8 +805,9 @@ void gnssBackground(void *argument)
   /* Infinite loop */
   for(;;)
   {
+	  osThreadFlagsWait(1, osFlagsWaitAny, osWaitForever);
 	  GNSS1A1_GNSS_BackgroundProcess(GNSS1A1_TESEO_LIV3F);
-    osDelay(100);
+	  		osDelay(100);
   }
   /* USER CODE END gnssBackground */
 }
@@ -781,43 +826,174 @@ void DataParserTask(void *argument)
 		GNSSParser_Status_t status, check;
 
 		if (GNSS1A1_GNSS_Init(GNSS1A1_TESEO_LIV3F) != BSP_ERROR_NONE) {
-			__BKPT();
-		}
+				__BKPT();
+			}
 
-	//	GNSSData_Mutex_Init();
-		GNSS_PARSER_Init(&GNSSParser_Data);
+			if (GNSS_PARSER_Init(&parsed_GNSSData) != GNSS_PARSER_OK) {
+				__BKPT();
+			}
+
   /* Infinite loop */
   for(;;)
   {
+	  osThreadFlagsWait(1, osFlagsWaitAny, osWaitForever);
+	  	  printf("Dataparser \n");
+	  	gnssMsg = GNSS1A1_GNSS_GetMessage(GNSS1A1_TESEO_LIV3F);
+	  			if (gnssMsg == NULL) {
+	  				continue;
+	  			}
 
-		gnssMsg = GNSS1A1_GNSS_GetMessage(GNSS1A1_TESEO_LIV3F);
-		if (gnssMsg == NULL) {
-			continue;
-		}
+	  			check = GNSS_PARSER_CheckSanity((uint8_t*) gnssMsg->buf, gnssMsg->len);
 
-		check = GNSS_PARSER_CheckSanity((uint8_t*) gnssMsg->buf, gnssMsg->len);
+	  			if (check != GNSS_PARSER_ERROR) {
+	  				for (int m = 0; m < NMEA_MSGS_NUM; m++) {
+	  					osMutexAcquire(GNSSMutexHandle, osWaitForever);
+	  					status = GNSS_PARSER_ParseMsg(&parsed_GNSSData, (eNMEAMsg) m,
+	  							(uint8_t*) gnssMsg->buf);
+	  					osMutexRelease(GNSSMutexHandle);
 
-		if (check != GNSS_PARSER_ERROR) {
-			for (int m = 0; m < NMEA_MSGS_NUM; m++) {
-				osMutexWait(GNSSMutexHandle, osWaitForever);
-				status = GNSS_PARSER_ParseMsg(&GNSSParser_Data, (eNMEAMsg) m,
-						(uint8_t*) gnssMsg->buf);
-				osMutexRelease(GNSSMutexHandle);
+	  					if ((status != GNSS_PARSER_ERROR)) {
 
-				if ((status != GNSS_PARSER_ERROR)) {
+	  						//check distance, rise flag if to far
+	  						//peut etre passer la position du telephone en parametre pour savoir si c'est trop loin (bluetooth)
+	  						if (parsed_GNSSData.gpgga_data.valid == (uint8_t) VALID) {
+	  							osThreadFlagsSet(printGPGGAHandle, 0x00000001);
+	  						} else {
+	  							osThreadFlagsSet(printGPRMCHandle, 0x00000001);
+	  						}
 
-					print_GPRMC(&GNSSParser_Data);
+	  					}
 
-				}
+	  				}
+	  			}
 
-			}
-		}
+	  			GNSS1A1_GNSS_ReleaseMessage(GNSS1A1_TESEO_LIV3F, gnssMsg);
 
-		GNSS1A1_GNSS_ReleaseMessage(GNSS1A1_TESEO_LIV3F, gnssMsg);
-
-		osDelay(1000);
+	  			osDelay(1000);
   }
   /* USER CODE END DataParserTask */
+}
+
+/* USER CODE BEGIN Header_startPrintGPRMC */
+/**
+* @brief Function implementing the printGPRMC thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_startPrintGPRMC */
+void startPrintGPRMC(void *argument)
+{
+  /* USER CODE BEGIN startPrintGPRMC */
+  /* Infinite loop */
+  for(;;)
+  {
+	  log_printf("UTC:\t\t\t\t[ %02d:%02d:%02d ]\n\r",
+	  				parsed_GNSSData.gprmc_data.utc.hh,
+	  				parsed_GNSSData.gprmc_data.utc.mm,
+	  				parsed_GNSSData.gprmc_data.utc.ss);
+	  		log_printf("Status:\t\t\t\t[ %c ]\t\t",
+	  				parsed_GNSSData.gprmc_data.status);
+
+	  		if (parsed_GNSSData.gprmc_data.status == (uint8_t) 'A') {
+	  			log_printf("-- Valid (reported in 2D and 3D fix conditions)\n\r");
+	  		} else if (parsed_GNSSData.gprmc_data.status == (uint8_t) 'V') {
+	  			log_printf("-- Warning (reported in NO FIX conditions)\n\r");
+	  		} else {
+	  			log_printf("-- Unknown status\n\r");
+	  		}
+
+	  		float64_t lat_mod = fmod(parsed_GNSSData.gprmc_data.xyz.lat, 100.0);
+	  		float64_t lon_mod = fmod(parsed_GNSSData.gprmc_data.xyz.lon, 100.0);
+
+	  		log_printf("Latitude:\t\t\t[ %.0f' %02d'' %c ]\n\r",
+	  				(parsed_GNSSData.gprmc_data.xyz.lat - lat_mod) / 100.0,
+	  				(int16_t) lat_mod, parsed_GNSSData.gprmc_data.xyz.ns);
+	  		log_printf("Longitude:\t\t\t[ %.0f' %02d'' %c ]\n\r",
+	  				(parsed_GNSSData.gprmc_data.xyz.lon - lon_mod) / 100.0,
+	  				(int16_t) lon_mod, parsed_GNSSData.gprmc_data.xyz.ew);
+	  		log_printf("Speed over ground (knots):\t[ %.01f ]\n\r",
+	  				parsed_GNSSData.gprmc_data.speed);
+	  		log_printf("Trackgood:\t\t\t[ %.01f ]\n\r",
+	  				parsed_GNSSData.gprmc_data.trackgood);
+
+	  		log_printf("Date (ddmmyy):\t\t\t[ %02d%02d%02d ]\n\r",
+	  				(int16_t) ((parsed_GNSSData.gprmc_data.date / 10000)),
+	  				(int16_t) ((parsed_GNSSData.gprmc_data.date / 100)
+	  						- (100 * (parsed_GNSSData.gprmc_data.date / 10000))),
+	  				(int16_t) (parsed_GNSSData.gprmc_data.date
+	  						- (100 * (parsed_GNSSData.gprmc_data.date / 100))));
+
+	  		log_printf("Magnetic Variation:\t\t[ %.01f ]\n\r",
+	  				parsed_GNSSData.gprmc_data.mag_var);
+
+	  		if ((parsed_GNSSData.gprmc_data.mag_var_dir != (uint8_t) 'E')
+	  				&& (parsed_GNSSData.gprmc_data.mag_var_dir != (uint8_t) 'W')) {
+	  			log_printf("Magnetic Var. Direction:\t[ - ]\n\r");
+	  		} else {
+	  			log_printf("Magnetic Var. Direction:\t[ %c ]\n\r",
+	  					parsed_GNSSData.gprmc_data.mag_var_dir);
+	  		}
+
+	  		log_printf("\n\n\r");
+
+	  		osDelay(1000);
+  }
+  /* USER CODE END startPrintGPRMC */
+}
+
+/* USER CODE BEGIN Header_startPrintGPGGA */
+/**
+* @brief Function implementing the printGPGGA thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_startPrintGPGGA */
+void startPrintGPGGA(void *argument)
+{
+  /* USER CODE BEGIN startPrintGPGGA */
+  /* Infinite loop */
+  for(;;)
+  {
+	  osThreadFlagsWait(0x00000001, 0, osWaitForever);
+	  		osMutexAcquire(GNSSMutexHandle, osWaitForever);
+
+	  		float64_t lat_mod = fmod(parsed_GNSSData.gpgga_data.xyz.lat, 100.0);
+	  		float64_t lon_mod = fmod(parsed_GNSSData.gpgga_data.xyz.lon, 100.0);
+
+	  		log_printf("UTC:\t\t\t[ %02d:%02d:%02d ]\n\r",
+	  				parsed_GNSSData.gpgga_data.utc.hh,
+	  				parsed_GNSSData.gpgga_data.utc.mm,
+	  				parsed_GNSSData.gpgga_data.utc.ss);
+
+	  		log_printf("Latitude:\t\t[ %.0f' %d'' %c ]\n\r",
+	  				(parsed_GNSSData.gpgga_data.xyz.lat - lat_mod) / 100.0,
+	  				(int16_t) lat_mod, parsed_GNSSData.gpgga_data.xyz.ns);
+
+	  		log_printf("Longitude:\t\t[ %.0f' %d'' %c ]\n\r",
+	  				(parsed_GNSSData.gpgga_data.xyz.lon - lon_mod) / 100.0,
+	  				(int16_t) lon_mod, parsed_GNSSData.gpgga_data.xyz.ew);
+
+	  		log_printf("Satellites locked:\t[ %d ]\n\r",
+	  				parsed_GNSSData.gpgga_data.sats);
+
+	  		log_printf("Position accuracy:\t[ %.1f ]\n\r",
+	  				parsed_GNSSData.gpgga_data.acc);
+
+	  		log_printf("Altitude:\t\t[ %.2f%c ]\n\r",
+	  				parsed_GNSSData.gpgga_data.xyz.alt,
+	  				(parsed_GNSSData.gpgga_data.xyz.mis + 32U));
+
+	  		log_printf("Geoid infos:\t\t[ %d%c ]\n\r",
+	  				parsed_GNSSData.gpgga_data.geoid.height,
+	  				parsed_GNSSData.gpgga_data.geoid.mis);
+	  		log_printf("Diff update:\t\t[ %d ]\n\r",
+	  				parsed_GNSSData.gpgga_data.update);
+
+	  		osMutexRelease(GNSSMutexHandle);
+
+	  		osDelay(1000);
+  }
+  /* USER CODE END startPrintGPGGA */
 }
 
 /**
@@ -834,10 +1010,12 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 	if (htim->Instance == TIM16) {
 			osThreadFlagsSet(Ack_LSM6DSO_DatHandle, 1);
 			osThreadFlagsSet(Ack_ToF_DataHandle,1);
+			osThreadFlagsSet(BackTaskGNSSHandle, 1);
 
 	}else if(htim->Instance == TIM2){
 			osThreadFlagsSet(SendDataLSM6Handle, 1);
 			osThreadFlagsSet(SendDataHandle, 1);
+			osThreadFlagsSet(ParserTaskGNSSHandle, 1);
 	}
   /* USER CODE END Callback 0 */
   if (htim->Instance == TIM17) {
