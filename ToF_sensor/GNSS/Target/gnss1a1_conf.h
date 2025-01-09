@@ -40,11 +40,11 @@ extern "C" {
 #define GNSS1A1_GNSS_I2C_Receive_IT  BSP_I2C1_Recv_IT
 #define GNSS1A1_GNSS_GetTick         BSP_GetTick
 
-#define GNSS1A1_RST_PORT                        GPIOB
-#define GNSS1A1_RST_PIN                         GPIO_PIN_1
+#define GNSS1A1_RST_PORT                        GPIOC
+#define GNSS1A1_RST_PIN                         GPIO_PIN_13
 
-#define GNSS1A1_WAKEUP_PORT                     GPIOB
-#define GNSS1A1_WAKEUP_PIN                      GPIO_PIN_0
+#define GNSS1A1_WAKEUP_PORT                     GPIOA
+#define GNSS1A1_WAKEUP_PIN                      GPIO_PIN_5
 
 //#define GNSS1A1_RegisterDefaultMspCallbacks     BSP_I2C1_RegisterDefaultMspCallbacks
 #define GNSS1A1_RegisterRxCb                    BSP_I2C1_RegisterRxCallback

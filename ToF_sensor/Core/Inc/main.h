@@ -71,6 +71,8 @@ void Error_Handler(void);
 #define LD2_GPIO_Port GPIOB
 #define LD3_Pin GPIO_PIN_1
 #define LD3_GPIO_Port GPIOB
+#define VL53L4CX_XSHUT_Pin GPIO_PIN_10
+#define VL53L4CX_XSHUT_GPIO_Port GPIOA
 #define JTMS_Pin GPIO_PIN_13
 #define JTMS_GPIO_Port GPIOA
 #define JTCK_Pin GPIO_PIN_14
