@@ -19,12 +19,15 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "cmsis_os.h"
+#include "app_fatfs.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include <stdio.h>
 #include <stdlib.h>
 #include "logger.h"
+#include <string.h>
+#include <stdarg.h> //for va_list var arg functions
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -42,6 +45,8 @@ typedef StaticQueue_t osStaticMessageQDef_t;
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
+
+SPI_HandleTypeDef hspi2;
 
 TIM_HandleTypeDef htim2;
 TIM_HandleTypeDef htim16;
@@ -124,6 +129,7 @@ static void MX_USB_PCD_Init(void);
 static void MX_USART1_UART_Init(void);
 static void MX_TIM2_Init(void);
 static void MX_TIM16_Init(void);
+static void MX_SPI2_Init(void);
 void StartDefaultTask(void *argument);
 void StartAck_ToF_Data(void *argument);
 void StartSendData(void *argument);
@@ -185,10 +191,14 @@ int main(void)
   MX_USART1_UART_Init();
   MX_TIM2_Init();
   MX_TIM16_Init();
+  MX_SPI2_Init();
+  if (MX_FATFS_Init() != APP_OK) {
+    Error_Handler();
+  }
   /* USER CODE BEGIN 2 */
 
   log_init(&huart1);
-  ToF_init();
+  //ToF_init();
   IKS01A3_MOTION_SENSOR_Init(IKS01A3_LSM6DSO_0, MOTION_GYRO);
     IKS01A3_MOTION_SENSOR_Init(1, MOTION_ACCELERO);
 
@@ -199,6 +209,87 @@ int main(void)
       CalibrationLSM6DSO();
       HAL_TIM_Base_Start_IT(&htim16);
       HAL_TIM_Base_Start_IT(&htim2);
+
+
+      log_printf("\r\n~ SD card demo by kiwih ~\r\n\r\n");
+
+        HAL_Delay(1000); //a short delay is important to let the SD card settle
+
+        //some variables for FatFs
+        FATFS FatFs; 	//Fatfs handle
+        FIL fil; 		//File handle
+        FRESULT fres; //Result after operations
+
+        //Open the file system
+        fres = f_mount(&FatFs, "", 1); //1=mount now
+        if (fres != FR_OK) {
+        	log_printf("f_mount error (%i)\r\n", fres);
+      	while(1);
+        }
+
+        //Let's get some statistics from the SD card
+        DWORD free_clusters, free_sectors, total_sectors;
+
+        FATFS* getFreeFs;
+
+        fres = f_getfree("", &free_clusters, &getFreeFs);
+        if (fres != FR_OK) {
+        	log_printf("f_getfree error (%i)\r\n", fres);
+      	while(1);
+        }
+
+        //Formula comes from ChaN's documentation
+        total_sectors = (getFreeFs->n_fatent - 2) * getFreeFs->csize;
+        free_sectors = free_clusters * getFreeFs->csize;
+
+        log_printf("SD card stats:\r\n%10lu KiB total drive space.\r\n%10lu KiB available.\r\n", total_sectors / 2, free_sectors / 2);
+
+        //Now let's try to open file "test.txt"
+        fres = f_open(&fil, "test.txt", FA_READ);
+        if (fres != FR_OK) {
+        	log_printf("f_open error (%i)\r\n");
+      	while(1);
+        }
+        log_printf("I was able to open 'test.txt' for reading!\r\n");
+
+        //Read 30 bytes from "test.txt" on the SD card
+        BYTE readBuf[30];
+
+        //We can either use f_read OR f_gets to get data out of files
+        //f_gets is a wrapper on f_read that does some string formatting for us
+        TCHAR* rres = f_gets((TCHAR*)readBuf, 30, &fil);
+        if(rres != 0) {
+        	log_printf("Read string from 'test.txt' contents: %s\r\n", readBuf);
+        } else {
+        	log_printf("f_gets error (%i)\r\n", fres);
+        }
+
+        //Be a tidy kiwi - don't forget to close your file!
+        f_close(&fil);
+
+        //Now let's try and write a file "write.txt"
+        fres = f_open(&fil, "write.txt", FA_WRITE | FA_OPEN_ALWAYS | FA_CREATE_ALWAYS);
+        if(fres == FR_OK) {
+        	log_printf("I was able to open 'write.txt' for writing\r\n");
+        } else {
+        	log_printf("f_open error (%i)\r\n", fres);
+        }
+
+        //Copy in a string
+        strncpy((char*)readBuf, "a new file is made!", 19);
+        UINT bytesWrote;
+        fres = f_write(&fil, readBuf, 19, &bytesWrote);
+        if(fres == FR_OK) {
+        	log_printf("Wrote %i bytes to 'write.txt'!\r\n", bytesWrote);
+        } else {
+        	log_printf("f_write error (%i)\r\n");
+        }
+
+        //Be a tidy kiwi - don't forget to close your file!
+        f_close(&fil);
+
+        //We're done, so de-mount the drive
+        f_mount(NULL, "", 0);
   /* USER CODE END 2 */
 
   /* Init scheduler */
@@ -358,6 +449,46 @@ void PeriphCommonClock_Config(void)
   /* USER CODE BEGIN Smps */
 
   /* USER CODE END Smps */
+}
+
+/**
+  * @brief SPI2 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_SPI2_Init(void)
+{
+
+  /* USER CODE BEGIN SPI2_Init 0 */
+
+  /* USER CODE END SPI2_Init 0 */
+
+  /* USER CODE BEGIN SPI2_Init 1 */
+
+  /* USER CODE END SPI2_Init 1 */
+  /* SPI2 parameter configuration*/
+  hspi2.Instance = SPI2;
+  hspi2.Init.Mode = SPI_MODE_MASTER;
+  hspi2.Init.Direction = SPI_DIRECTION_2LINES;
+  hspi2.Init.DataSize = SPI_DATASIZE_8BIT;
+  hspi2.Init.CLKPolarity = SPI_POLARITY_LOW;
+  hspi2.Init.CLKPhase = SPI_PHASE_1EDGE;
+  hspi2.Init.NSS = SPI_NSS_SOFT;
+  hspi2.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_128;
+  hspi2.Init.FirstBit = SPI_FIRSTBIT_MSB;
+  hspi2.Init.TIMode = SPI_TIMODE_DISABLE;
+  hspi2.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
+  hspi2.Init.CRCPolynomial = 7;
+  hspi2.Init.CRCLength = SPI_CRC_LENGTH_DATASIZE;
+  hspi2.Init.NSSPMode = SPI_NSS_PULSE_ENABLE;
+  if (HAL_SPI_Init(&hspi2) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN SPI2_Init 2 */
+
+  /* USER CODE END SPI2_Init 2 */
+
 }
 
 /**
@@ -536,7 +667,17 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOD_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(SD_CS_GPIO_Port, SD_CS_Pin, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOB, LD2_Pin|LD3_Pin|LD1_Pin, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin : SD_CS_Pin */
+  GPIO_InitStruct.Pin = SD_CS_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(SD_CS_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pin : B1_Pin */
   GPIO_InitStruct.Pin = B1_Pin;
@@ -728,12 +869,12 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
   /* USER CODE BEGIN Callback 0 */
 	if (htim->Instance == TIM16) {
-			osThreadFlagsSet(Ack_LSM6DSO_DatHandle, 1);
-			osThreadFlagsSet(Ack_ToF_DataHandle,1);
+			//osThreadFlagsSet(Ack_LSM6DSO_DatHandle, 1);
+			//osThreadFlagsSet(Ack_ToF_DataHandle,1);
 
 	}else if(htim->Instance == TIM2){
-			osThreadFlagsSet(SendDataLSM6Handle, 1);
-			osThreadFlagsSet(SendDataHandle, 1);
+			//osThreadFlagsSet(SendDataLSM6Handle, 1);
+			//osThreadFlagsSet(SendDataHandle, 1);
 	}
   /* USER CODE END Callback 0 */
   if (htim->Instance == TIM17) {
