@@ -1,0 +1,3 @@
+../Middlewares/ST/lib_gnss/LibGNSS/Src/gnss_parser.c:26:21:GNSS_PARSER_Init	2
+../Middlewares/ST/lib_gnss/LibGNSS/Src/gnss_parser.c:68:21:GNSS_PARSER_CheckSanity	5
+../Middlewares/ST/lib_gnss/LibGNSS/Src/gnss_parser.c:95:21:GNSS_PARSER_ParseMsg	15

@@ -1,0 +1,4 @@
+../Drivers/BSP/Components/teseo_liv3f/teseo_liv3f_uart.c:59:13:teseo_rx_callback_ok	8
+../Drivers/BSP/Components/teseo_liv3f/teseo_liv3f_uart.c:149:13:teseo_rx_callback_error	1
+../Drivers/BSP/Components/teseo_liv3f/teseo_liv3f_uart.c:163:6:teseo_uart_rx_callback	3
+../Drivers/BSP/Components/teseo_liv3f/teseo_liv3f_uart.c:178:6:teseo_uart_rx_onoff	5

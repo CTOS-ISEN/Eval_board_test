@@ -1,0 +1,11 @@
+../Drivers/BSP/Components/teseo_liv3f/teseo_liv3f_queue.c:44:23:teseo_ffs	24	static
+../Drivers/BSP/Components/teseo_liv3f/teseo_liv3f_queue.c:358:29:Teseo_Queue_static_alloc	4	static
+../Drivers/BSP/Components/teseo_liv3f/teseo_liv3f_queue.c:367:16:__find_msg_idx	24	static
+../Drivers/BSP/Components/teseo_liv3f/teseo_liv3f_queue.c:385:13:__check_unreleased_buffer	16	static
+../Drivers/BSP/Components/teseo_liv3f/teseo_liv3f_queue.c:402:13:check_longer_msg	40	static
+../Drivers/BSP/Components/teseo_liv3f/teseo_liv3f_queue.c:434:22:teseo_queue_init	24	static
+../Drivers/BSP/Components/teseo_liv3f/teseo_liv3f_queue.c:460:6:teseo_queue_deinit	16	static
+../Drivers/BSP/Components/teseo_liv3f/teseo_liv3f_queue.c:468:20:teseo_queue_claim_wr_buffer	24	static
+../Drivers/BSP/Components/teseo_liv3f/teseo_liv3f_queue.c:512:6:teseo_queue_release_wr_buffer	24	static
+../Drivers/BSP/Components/teseo_liv3f/teseo_liv3f_queue.c:554:26:teseo_queue_claim_rd_buffer	32	static
+../Drivers/BSP/Components/teseo_liv3f/teseo_liv3f_queue.c:604:6:teseo_queue_release_rd_buffer	24	static

@@ -1,0 +1,3 @@
+../GNSS/Target/gnss_lib_config.c:22:9:GNSS_Wrapper_Send	1
+../GNSS/Target/gnss_lib_config.c:36:9:GNSS_Wrapper_Reset	1
+../GNSS/Target/gnss_lib_config.c:45:6:GNSS_Wrapper_Delay	1

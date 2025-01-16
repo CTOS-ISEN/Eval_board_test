@@ -1,0 +1,14 @@
+../Drivers/BSP/GNSS1A1/gnss1a1_gnss.c:62:17:BSP_GetTick	1
+../Drivers/BSP/GNSS1A1/gnss1a1_gnss.c:74:16:BSP_I2C1_Send_IT	1
+../Drivers/BSP/GNSS1A1/gnss1a1_gnss.c:81:16:BSP_I2C1_Recv_IT	1
+../Drivers/BSP/GNSS1A1/gnss1a1_gnss.c:115:9:GNSS1A1_GNSS_Init	3
+../Drivers/BSP/GNSS1A1/gnss1a1_gnss.c:138:9:GNSS1A1_GNSS_DeInit	3
+../Drivers/BSP/GNSS1A1/gnss1a1_gnss.c:158:27:GNSS1A1_GNSS_GetMessage	2
+../Drivers/BSP/GNSS1A1/gnss1a1_gnss.c:174:9:GNSS1A1_GNSS_ReleaseMessage	3
+../Drivers/BSP/GNSS1A1/gnss1a1_gnss.c:197:9:GNSS1A1_GNSS_Send	3
+../Drivers/BSP/GNSS1A1/gnss1a1_gnss.c:220:9:GNSS1A1_GNSS_Wakeup_Status	3
+../Drivers/BSP/GNSS1A1/gnss1a1_gnss.c:236:9:GNSS1A1_GNSS_Reset	4
+../Drivers/BSP/GNSS1A1/gnss1a1_gnss.c:266:6:GNSS1A1_GNSS_BackgroundProcess	1
+../Drivers/BSP/GNSS1A1/gnss1a1_gnss.c:293:16:TESEO_LIV3F_Probe	3
+../Drivers/BSP/GNSS1A1/gnss1a1_gnss.c:345:13:GNSS1A1_GNSS_Rst	1
+../Drivers/BSP/GNSS1A1/gnss1a1_gnss.c:353:13:GNSS1A1_GNSS_RegisterCallbacks	1

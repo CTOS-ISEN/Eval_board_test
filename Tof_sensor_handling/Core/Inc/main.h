@@ -7,7 +7,7 @@
   ******************************************************************************
   * @attention
   *
-  * Copyright (c) 2024 STMicroelectronics.
+  * Copyright (c) 2025 STMicroelectronics.
   * All rights reserved.
   *
   * This software is licensed under terms that can be found in the LICENSE file
@@ -31,8 +31,9 @@ extern "C" {
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "ToF_library.h"
 #include "MEMS_library.h"
+#include "GNSS_library.h"
+#include "teseo_liv3f.h"
 /* USER CODE END Includes */
 
 /* Exported types ------------------------------------------------------------*/
@@ -58,6 +59,10 @@ void Error_Handler(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
+#define RST_GNSS_Pin GPIO_PIN_13
+#define RST_GNSS_GPIO_Port GPIOC
+#define WKP_GNSS_Pin GPIO_PIN_5
+#define WKP_GNSS_GPIO_Port GPIOA
 #define B1_Pin GPIO_PIN_4
 #define B1_GPIO_Port GPIOC
 #define B1_EXTI_IRQn EXTI4_IRQn
@@ -65,6 +70,8 @@ void Error_Handler(void);
 #define LD2_GPIO_Port GPIOB
 #define LD3_Pin GPIO_PIN_1
 #define LD3_GPIO_Port GPIOB
+#define VL53L4CX_XSHUT_Pin GPIO_PIN_10
+#define VL53L4CX_XSHUT_GPIO_Port GPIOA
 #define JTMS_Pin GPIO_PIN_13
 #define JTMS_GPIO_Port GPIOA
 #define JTCK_Pin GPIO_PIN_14
