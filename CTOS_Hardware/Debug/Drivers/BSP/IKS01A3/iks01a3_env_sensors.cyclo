@@ -1,0 +1,12 @@
+../Drivers/BSP/IKS01A3/iks01a3_env_sensors.c:138:9:IKS01A3_ENV_SENSOR_Init	28
+../Drivers/BSP/IKS01A3/iks01a3_env_sensors.c:585:9:IKS01A3_ENV_SENSOR_DeInit	3
+../Drivers/BSP/IKS01A3/iks01a3_env_sensors.c:611:9:IKS01A3_ENV_SENSOR_GetCapabilities	3
+../Drivers/BSP/IKS01A3/iks01a3_env_sensors.c:637:9:IKS01A3_ENV_SENSOR_ReadID	3
+../Drivers/BSP/IKS01A3/iks01a3_env_sensors.c:663:9:IKS01A3_ENV_SENSOR_Enable	4
+../Drivers/BSP/IKS01A3/iks01a3_env_sensors.c:699:9:IKS01A3_ENV_SENSOR_Disable	4
+../Drivers/BSP/IKS01A3/iks01a3_env_sensors.c:736:9:IKS01A3_ENV_SENSOR_GetOutputDataRate	4
+../Drivers/BSP/IKS01A3/iks01a3_env_sensors.c:773:9:IKS01A3_ENV_SENSOR_SetOutputDataRate	4
+../Drivers/BSP/IKS01A3/iks01a3_env_sensors.c:810:9:IKS01A3_ENV_SENSOR_GetValue	4
+../Drivers/BSP/IKS01A3/iks01a3_env_sensors.c:855:16:HTS221_0_Probe	16
+../Drivers/BSP/IKS01A3/iks01a3_env_sensors.c:1124:16:LPS22HH_0_Probe	16
+../Drivers/BSP/IKS01A3/iks01a3_env_sensors.c:1216:16:STTS751_0_Probe	14
