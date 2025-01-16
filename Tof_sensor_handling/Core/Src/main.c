@@ -1,20 +1,20 @@
 /* USER CODE BEGIN Header */
 /**
- ******************************************************************************
- * @file           : main.c
- * @brief          : Main program body
- ******************************************************************************
- * @attention
- *
- * Copyright (c) 2025 STMicroelectronics.
- * All rights reserved.
- *
- * This software is licensed under terms that can be found in the LICENSE file
- * in the root directory of this software component.
- * If no LICENSE file comes with this software, it is provided AS-IS.
- *
- ******************************************************************************
- */
+  ******************************************************************************
+  * @file           : main.c
+  * @brief          : Main program body
+  ******************************************************************************
+  * @attention
+  *
+  * Copyright (c) 2024 STMicroelectronics.
+  * All rights reserved.
+  *
+  * This software is licensed under terms that can be found in the LICENSE file
+  * in the root directory of this software component.
+  * If no LICENSE file comes with this software, it is provided AS-IS.
+  *
+  ******************************************************************************
+  */
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
@@ -24,6 +24,7 @@
 /* USER CODE BEGIN Includes */
 #include <stdio.h>
 #include <stdlib.h>
+#include "53l4a2_ranging_sensor.h"
 #include "logger.h"
 /* USER CODE END Includes */
 
@@ -35,12 +36,10 @@ typedef StaticQueue_t osStaticMessageQDef_t;
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
-
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
@@ -87,37 +86,20 @@ const osThreadAttr_t SendDataLSM6_attributes = {
   .priority = (osPriority_t) osPriorityLow,
   .stack_size = 256 * 4
 };
-/* Definitions for BackTaskGNSS */
-osThreadId_t BackTaskGNSSHandle;
-const osThreadAttr_t BackTaskGNSS_attributes = {
-  .name = "BackTaskGNSS",
-  .priority = (osPriority_t) osPriorityLow,
-  .stack_size = 128 * 4
-};
-/* Definitions for ParserTaskGNSS */
-osThreadId_t ParserTaskGNSSHandle;
-const osThreadAttr_t ParserTaskGNSS_attributes = {
-  .name = "ParserTaskGNSS",
-  .priority = (osPriority_t) osPriorityLow,
-  .stack_size = 128 * 4
-};
-/* Definitions for printGPRMC */
-osThreadId_t printGPRMCHandle;
-const osThreadAttr_t printGPRMC_attributes = {
-  .name = "printGPRMC",
-  .priority = (osPriority_t) osPriorityLow,
-  .stack_size = 128 * 4
-};
-/* Definitions for printGPGGA */
-osThreadId_t printGPGGAHandle;
-const osThreadAttr_t printGPGGA_attributes = {
-  .name = "printGPGGA",
-  .priority = (osPriority_t) osPriorityLow,
-  .stack_size = 128 * 4
+/* Definitions for ToFData_Queue */
+osMessageQueueId_t ToFData_QueueHandle;
+uint8_t ToFData_QueueBuffer[ 16 * sizeof( RANGING_SENSOR_Result_t ) ];
+osStaticMessageQDef_t ToFData_QueueControlBlock;
+const osMessageQueueAttr_t ToFData_Queue_attributes = {
+  .name = "ToFData_Queue",
+  .cb_mem = &ToFData_QueueControlBlock,
+  .cb_size = sizeof(ToFData_QueueControlBlock),
+  .mq_mem = &ToFData_QueueBuffer,
+  .mq_size = sizeof(ToFData_QueueBuffer)
 };
 /* Definitions for LSM6DSOData_Queue */
 osMessageQueueId_t LSM6DSOData_QueueHandle;
-uint8_t LSM6DSOData_QueueBuffer[ 16 * sizeof( IMU_Data ) ];
+uint8_t LSM6DSOData_QueueBuffer[ 16 * sizeof( LSM6DSO_data ) ];
 osStaticMessageQDef_t LSM6DSOData_QueueControlBlock;
 const osMessageQueueAttr_t LSM6DSOData_Queue_attributes = {
   .name = "LSM6DSOData_Queue",
@@ -131,13 +113,8 @@ osMutexId_t MutexSendHandle;
 const osMutexAttr_t MutexSend_attributes = {
   .name = "MutexSend"
 };
-/* Definitions for GNSSMutex */
-osMutexId_t GNSSMutexHandle;
-const osMutexAttr_t GNSSMutex_attributes = {
-  .name = "GNSSMutex"
-};
 /* USER CODE BEGIN PV */
-static GNSSParser_Data_t parsed_GNSSData;
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -153,24 +130,22 @@ void StartAck_ToF_Data(void *argument);
 void StartSendData(void *argument);
 void StartAck_LSM6DSO_Data(void *argument);
 void StartSendDataLSM6(void *argument);
-void gnssBackground(void *argument);
-void DataParserTask(void *argument);
-void startPrintGPRMC(void *argument);
-void startPrintGPGGA(void *argument);
 
 /* USER CODE BEGIN PFP */
-
+int _write(int file,char *ptr,int len);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-int _write(int file, char *ptr, int len) {
-	int DataIdx;
-	for (DataIdx = 0; DataIdx < len; DataIdx++) {
-		//__io_putchar(*ptr++);
-		ITM_SendChar(*ptr++);
-	}
-	return len;
+int _write(int file, char *ptr, int len)
+{
+int DataIdx;
+for (DataIdx = 0; DataIdx < len; DataIdx++)
+{
+//__io_putchar(*ptr++);
+ITM_SendChar(*ptr++);
+}
+return len;
 }
 
 /* USER CODE END 0 */
@@ -212,21 +187,14 @@ int main(void)
   MX_TIM2_Init();
   MX_TIM16_Init();
   /* USER CODE BEGIN 2 */
-	log_init(&huart1);
-	log_printf("\x1b[2J"); //clear screen
-	log_printf("huart initialized\r\n");
 
-	HAL_GPIO_WritePin(RST_GNSS_GPIO_Port, RST_GNSS_Pin, RESET);
-	HAL_GPIO_WritePin(WKP_GNSS_GPIO_Port, WKP_GNSS_Pin, SET);
-	log_init(&huart1);
+  log_init(&huart1);
+  ToF_init();
+  MyInitLSM6DSO();
+  MyEnableLSM6DSO();
 
-	MyInitLSM6DSO();
-	MyEnableLSM6DSO();
-	MyInitLIS2MDL();
-	MyEnableLIS2MDL();
-
-	HAL_TIM_Base_Start_IT(&htim16);
-	HAL_TIM_Base_Start_IT(&htim2);
+      HAL_TIM_Base_Start_IT(&htim16);
+      HAL_TIM_Base_Start_IT(&htim2);
   /* USER CODE END 2 */
 
   /* Init scheduler */
@@ -235,27 +203,27 @@ int main(void)
   /* creation of MutexSend */
   MutexSendHandle = osMutexNew(&MutexSend_attributes);
 
-  /* creation of GNSSMutex */
-  GNSSMutexHandle = osMutexNew(&GNSSMutex_attributes);
-
   /* USER CODE BEGIN RTOS_MUTEX */
-	/* add mutexes, ... */
+  /* add mutexes, ... */
   /* USER CODE END RTOS_MUTEX */
 
   /* USER CODE BEGIN RTOS_SEMAPHORES */
-	/* add semaphores, ... */
+  /* add semaphores, ... */
   /* USER CODE END RTOS_SEMAPHORES */
 
   /* USER CODE BEGIN RTOS_TIMERS */
-	/* start timers, add new ones, ... */
+  /* start timers, add new ones, ... */
   /* USER CODE END RTOS_TIMERS */
 
   /* Create the queue(s) */
+  /* creation of ToFData_Queue */
+  ToFData_QueueHandle = osMessageQueueNew (16, sizeof(RANGING_SENSOR_Result_t), &ToFData_Queue_attributes);
+
   /* creation of LSM6DSOData_Queue */
-  LSM6DSOData_QueueHandle = osMessageQueueNew (16, sizeof(IMU_Data), &LSM6DSOData_Queue_attributes);
+  LSM6DSOData_QueueHandle = osMessageQueueNew (16, sizeof(LSM6DSO_data), &LSM6DSOData_Queue_attributes);
 
   /* USER CODE BEGIN RTOS_QUEUES */
-	/* add queues, ... */
+  /* add queues, ... */
   /* USER CODE END RTOS_QUEUES */
 
   /* Create the thread(s) */
@@ -274,24 +242,12 @@ int main(void)
   /* creation of SendDataLSM6 */
   SendDataLSM6Handle = osThreadNew(StartSendDataLSM6, NULL, &SendDataLSM6_attributes);
 
-  /* creation of BackTaskGNSS */
-  BackTaskGNSSHandle = osThreadNew(gnssBackground, NULL, &BackTaskGNSS_attributes);
-
-  /* creation of ParserTaskGNSS */
-  ParserTaskGNSSHandle = osThreadNew(DataParserTask, NULL, &ParserTaskGNSS_attributes);
-
-  /* creation of printGPRMC */
-  printGPRMCHandle = osThreadNew(startPrintGPRMC, NULL, &printGPRMC_attributes);
-
-  /* creation of printGPGGA */
-  printGPGGAHandle = osThreadNew(startPrintGPGGA, NULL, &printGPGGA_attributes);
-
   /* USER CODE BEGIN RTOS_THREADS */
-	/* add threads, ... */
+  /* add threads, ... */
   /* USER CODE END RTOS_THREADS */
 
   /* USER CODE BEGIN RTOS_EVENTS */
-	/* add events, ... */
+  /* add events, ... */
   /* USER CODE END RTOS_EVENTS */
 
   /* Start scheduler */
@@ -301,11 +257,13 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-	while (1) {
+  while (1)
+  {
+
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-	}
+  }
   /* USER CODE END 3 */
 }
 
@@ -574,27 +532,7 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOD_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(RST_GNSS_GPIO_Port, RST_GNSS_Pin, GPIO_PIN_RESET);
-
-  /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOA, WKP_GNSS_Pin|VL53L4CX_XSHUT_Pin, GPIO_PIN_RESET);
-
-  /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOB, LD2_Pin|LD3_Pin|LD1_Pin, GPIO_PIN_RESET);
-
-  /*Configure GPIO pin : RST_GNSS_Pin */
-  GPIO_InitStruct.Pin = RST_GNSS_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(RST_GNSS_GPIO_Port, &GPIO_InitStruct);
-
-  /*Configure GPIO pins : WKP_GNSS_Pin VL53L4CX_XSHUT_Pin */
-  GPIO_InitStruct.Pin = WKP_GNSS_Pin|VL53L4CX_XSHUT_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
   /*Configure GPIO pin : B1_Pin */
   GPIO_InitStruct.Pin = B1_Pin;
@@ -638,71 +576,93 @@ static void MX_GPIO_Init(void)
 
 /* USER CODE BEGIN Header_StartDefaultTask */
 /**
- * @brief  Function implementing the defaultTask thread.
- * @param  argument: Not used
- * @retval None
- */
+  * @brief  Function implementing the defaultTask thread.
+  * @param  argument: Not used
+  * @retval None
+  */
 /* USER CODE END Header_StartDefaultTask */
 void StartDefaultTask(void *argument)
 {
   /* USER CODE BEGIN 5 */
-	/* Infinite loop */
-	for (;;) {
-		osDelay(1);
-	}
+
+  /* Infinite loop */
+  for(;;)
+  {
+	  osDelay(1);
+  }
   /* USER CODE END 5 */
 }
 
 /* USER CODE BEGIN Header_StartAck_ToF_Data */
 /**
- * @brief Function implementing the Ack_ToF_Data thread.
- * @param argument: Not used
- * @retval None
- */
+* @brief Function implementing the Ack_ToF_Data thread.
+* @param argument: Not used
+* @retval None
+*/
 /* USER CODE END Header_StartAck_ToF_Data */
 void StartAck_ToF_Data(void *argument)
 {
   /* USER CODE BEGIN StartAck_ToF_Data */
-	/* Infinite loop */
-	for (;;) {
-		osDelay(1000);
-	}
+
+	static RANGING_SENSOR_Result_t result;
+  /* Infinite loop */
+  for(;;)
+  {
+	  osThreadFlagsWait(1, osFlagsWaitAny, osWaitForever);
+	  ToF_acquire_data(&result);
+	        osMessageQueuePut(ToFData_QueueHandle, &result, 1, osWaitForever);
+	      osDelay(1);
+
+  }
   /* USER CODE END StartAck_ToF_Data */
 }
 
 /* USER CODE BEGIN Header_StartSendData */
 /**
- * @brief Function implementing the SendData thread.
- * @param argument: Not used
- * @retval None
- */
+* @brief Function implementing the SendData thread.
+* @param argument: Not used
+* @retval None
+*/
 /* USER CODE END Header_StartSendData */
 void StartSendData(void *argument)
 {
   /* USER CODE BEGIN StartSendData */
-	/* Infinite loop */
-	for (;;) {
-		osDelay(1000);
-	}
+	static RANGING_SENSOR_Result_t result;
+  /* Infinite loop */
+  for(;;)
+  {
+	  osThreadFlagsWait(1, osFlagsWaitAny, osWaitForever);
+	  osMutexAcquire(MutexSendHandle, osWaitForever);
+	  while(osMessageQueueGetCount(ToFData_QueueHandle)>0){
+
+			osMessageQueueGet(ToFData_QueueHandle, &result, (uint8_t*) 1,osWaitForever);
+			//print_result(&result);
+
+			logger_print_result(&result);
+		}
+	  osMutexRelease(MutexSendHandle);
+
+    osDelay(1);
+  }
   /* USER CODE END StartSendData */
 }
 
 /* USER CODE BEGIN Header_StartAck_LSM6DSO_Data */
 /**
- * @brief Function implementing the Ack_LSM6DSO_Dat thread.
- * @param argument: Not used
- * @retval None
- */
+* @brief Function implementing the Ack_LSM6DSO_Dat thread.
+* @param argument: Not used
+* @retval None
+*/
 /* USER CODE END Header_StartAck_LSM6DSO_Data */
 void StartAck_LSM6DSO_Data(void *argument)
 {
   /* USER CODE BEGIN StartAck_LSM6DSO_Data */
-	/* Infinite loop */
-	for (;;) {
+  /* Infinite loop */
+  for(;;)
+  {
 		osThreadFlagsWait(1, osFlagsWaitAny, osWaitForever);
-		IMU_Data mov_data;
-		MyGettingLSM6DSO(&(mov_data.Acc), &(mov_data.Gyr));
-		MyGettingLIS2MDL(&(mov_data.Mag));
+		LSM6DSO_data mov_data;
+		MyGettingLSM6DSO(&mov_data.Acc, &mov_data.Gyr);
 		/*printf(
 				"Xgyro: %ld | Ygyro: %ld | Zgyro: %ld | Xacc: %ld | Yacc: %ld | Zacc: %ld\n",
 				mov_data.axes_gyro.x, mov_data.axes_gyro.y,
@@ -711,241 +671,40 @@ void StartAck_LSM6DSO_Data(void *argument)
 		printf("Get at : %ld\n", osKernelGetTickCount());*/
 		osMessageQueuePut(LSM6DSOData_QueueHandle, &mov_data, 1, osWaitForever);
 		osDelay(1);
-	}
+  }
   /* USER CODE END StartAck_LSM6DSO_Data */
 }
 
 /* USER CODE BEGIN Header_StartSendDataLSM6 */
 /**
- * @brief Function implementing the SendDataLSM6 thread.
- * @param argument: Not used
- * @retval None
- */
+* @brief Function implementing the SendDataLSM6 thread.
+* @param argument: Not used
+* @retval None
+*/
 /* USER CODE END Header_StartSendDataLSM6 */
 void StartSendDataLSM6(void *argument)
 {
   /* USER CODE BEGIN StartSendDataLSM6 */
-	/* Infinite loop */
-	for (;;) {
+  /* Infinite loop */
+  for(;;)
+  {
 		osThreadFlagsWait(1, osFlagsWaitAny, osWaitForever);
 		osMutexAcquire(MutexSendHandle, osWaitForever);
-		IMU_Data send_data;
+		LSM6DSO_data send_data;
 		while(osMessageQueueGetCount(LSM6DSOData_QueueHandle)>0) {
 			osMessageQueueGet(LSM6DSOData_QueueHandle, &send_data, (uint8_t*) 1,
 					osWaitForever);
 			log_printf(
-					"SEND : Xgyro: %ld | Ygyro: %ld | Zgyro: %ld | Xacc: %ld | Yacc: %ld | Zacc: %ld | Xmag: %ld | Ymag : %ld | Zmag : %ld\n\r",
+					"SEND : Xgyro: %ld | Ygyro: %ld | Zgyro: %ld | Xacc: %ld | Yacc: %ld | Zacc: %ld\n",
 					send_data.Gyr.x, send_data.Gyr.y,
 					send_data.Gyr.z, send_data.Acc.x,
-					send_data.Acc.y, send_data.Acc.z,
-					send_data.Mag.x, send_data.Mag.y,
-					send_data.Mag.z);
+					send_data.Acc.y, send_data.Acc.z);
 		}
 		printf("Send at : %ld\n", osKernelGetTickCount());
 		osMutexRelease(MutexSendHandle);
 		osDelay(1);
-	}
+  }
   /* USER CODE END StartSendDataLSM6 */
-}
-
-/* USER CODE BEGIN Header_gnssBackground */
-/**
- * @brief Function implementing the BackTaskGNSS thread.
- * @param argument: Not used
- * @retval None
- */
-/* USER CODE END Header_gnssBackground */
-void gnssBackground(void *argument)
-{
-  /* USER CODE BEGIN gnssBackground */
-	/* Infinite loop */
-	for (;;) {
-//		osThreadFlagsWait(1, osFlagsWaitAny, osWaitForever);
-//		GNSS1A1_GNSS_BackgroundProcess(GNSS1A1_TESEO_LIV3F);
-		osDelay(100);
-	}
-  /* USER CODE END gnssBackground */
-}
-
-/* USER CODE BEGIN Header_DataParserTask */
-/**
- * @brief Function implementing the ParserTaskGNSS thread.
- * @param argument: Not used
- * @retval None
- */
-/* USER CODE END Header_DataParserTask */
-void DataParserTask(void *argument)
-{
-  /* USER CODE BEGIN DataParserTask */
-//	const GNSS1A1_GNSS_Msg_t *gnssMsg = NULL;
-//	GNSSParser_Status_t status, check;
-//
-//	if (GNSS1A1_GNSS_Init(GNSS1A1_TESEO_LIV3F) != BSP_ERROR_NONE) {
-//		__BKPT();
-//	}
-//
-//	if (GNSS_PARSER_Init(&parsed_GNSSData) != GNSS_PARSER_OK) {
-//		__BKPT();
-//	}
-
-	/* Infinite loop */
-	for (;;) {
-//		osThreadFlagsWait(1, osFlagsWaitAny, osWaitForever);
-//		printf("Dataparser \n");
-//		gnssMsg = GNSS1A1_GNSS_GetMessage(GNSS1A1_TESEO_LIV3F);
-//		if (gnssMsg == NULL) {
-//			continue;
-//		}
-//
-//		check = GNSS_PARSER_CheckSanity((uint8_t*) gnssMsg->buf, gnssMsg->len);
-//
-//		if (check != GNSS_PARSER_ERROR) {
-//			for (int m = 0; m < NMEA_MSGS_NUM; m++) {
-//				osMutexAcquire(GNSSMutexHandle, osWaitForever);
-//				status = GNSS_PARSER_ParseMsg(&parsed_GNSSData, (eNMEAMsg) m,
-//						(uint8_t*) gnssMsg->buf);
-//				osMutexRelease(GNSSMutexHandle);
-//
-//				if ((status != GNSS_PARSER_ERROR)) {
-//
-//					//check distance, rise flag if to far
-//					//peut etre passer la position du telephone en parametre pour savoir si c'est trop loin (bluetooth)
-//					if (parsed_GNSSData.gpgga_data.valid == (uint8_t) VALID) {
-//						osThreadFlagsSet(printGPGGAHandle, 0x00000001);
-//					} else {
-//						osThreadFlagsSet(printGPRMCHandle, 0x00000001);
-//					}
-//
-//				}
-//
-//			}
-//		}
-//
-//		GNSS1A1_GNSS_ReleaseMessage(GNSS1A1_TESEO_LIV3F, gnssMsg);
-
-		osDelay(1000);
-	}
-  /* USER CODE END DataParserTask */
-}
-
-/* USER CODE BEGIN Header_startPrintGPRMC */
-/**
- * @brief Function implementing the printGPRMC thread.
- * @param argument: Not used
- * @retval None
- */
-/* USER CODE END Header_startPrintGPRMC */
-void startPrintGPRMC(void *argument)
-{
-  /* USER CODE BEGIN startPrintGPRMC */
-	/* Infinite loop */
-	for (;;) {
-		/*  log_printf("UTC:\t\t\t\t[ %02d:%02d:%02d ]\n\r",
-		 parsed_GNSSData.gprmc_data.utc.hh,
-		 parsed_GNSSData.gprmc_data.utc.mm,
-		 parsed_GNSSData.gprmc_data.utc.ss);
-		 log_printf("Status:\t\t\t\t[ %c ]\t\t",
-		 parsed_GNSSData.gprmc_data.status);
-
-		 if (parsed_GNSSData.gprmc_data.status == (uint8_t) 'A') {
-		 log_printf("-- Valid (reported in 2D and 3D fix conditions)\n\r");
-		 } else if (parsed_GNSSData.gprmc_data.status == (uint8_t) 'V') {
-		 log_printf("-- Warning (reported in NO FIX conditions)\n\r");
-		 } else {
-		 log_printf("-- Unknown status\n\r");
-		 }
-
-		 float64_t lat_mod = fmod(parsed_GNSSData.gprmc_data.xyz.lat, 100.0);
-		 float64_t lon_mod = fmod(parsed_GNSSData.gprmc_data.xyz.lon, 100.0);
-
-		 log_printf("Latitude:\t\t\t[ %.0f' %02d'' %c ]\n\r",
-		 (parsed_GNSSData.gprmc_data.xyz.lat - lat_mod) / 100.0,
-		 (int16_t) lat_mod, parsed_GNSSData.gprmc_data.xyz.ns);
-		 log_printf("Longitude:\t\t\t[ %.0f' %02d'' %c ]\n\r",
-		 (parsed_GNSSData.gprmc_data.xyz.lon - lon_mod) / 100.0,
-		 (int16_t) lon_mod, parsed_GNSSData.gprmc_data.xyz.ew);
-		 log_printf("Speed over ground (knots):\t[ %.01f ]\n\r",
-		 parsed_GNSSData.gprmc_data.speed);
-		 log_printf("Trackgood:\t\t\t[ %.01f ]\n\r",
-		 parsed_GNSSData.gprmc_data.trackgood);
-
-		 log_printf("Date (ddmmyy):\t\t\t[ %02d%02d%02d ]\n\r",
-		 (int16_t) ((parsed_GNSSData.gprmc_data.date / 10000)),
-		 (int16_t) ((parsed_GNSSData.gprmc_data.date / 100)
-		 - (100 * (parsed_GNSSData.gprmc_data.date / 10000))),
-		 (int16_t) (parsed_GNSSData.gprmc_data.date
-		 - (100 * (parsed_GNSSData.gprmc_data.date / 100))));
-
-		 log_printf("Magnetic Variation:\t\t[ %.01f ]\n\r",
-		 parsed_GNSSData.gprmc_data.mag_var);
-
-		 if ((parsed_GNSSData.gprmc_data.mag_var_dir != (uint8_t) 'E')
-		 && (parsed_GNSSData.gprmc_data.mag_var_dir != (uint8_t) 'W')) {
-		 log_printf("Magnetic Var. Direction:\t[ - ]\n\r");
-		 } else {
-		 log_printf("Magnetic Var. Direction:\t[ %c ]\n\r",
-		 parsed_GNSSData.gprmc_data.mag_var_dir);
-		 }
-
-		 log_printf("\n\n\r");
-		 */
-		osDelay(1000);
-	}
-  /* USER CODE END startPrintGPRMC */
-}
-
-/* USER CODE BEGIN Header_startPrintGPGGA */
-/**
- * @brief Function implementing the printGPGGA thread.
- * @param argument: Not used
- * @retval None
- */
-/* USER CODE END Header_startPrintGPGGA */
-void startPrintGPGGA(void *argument)
-{
-  /* USER CODE BEGIN startPrintGPGGA */
-	/* Infinite loop */
-	for (;;) {
-		/*  osThreadFlagsWait(0x00000001, 0, osWaitForever);
-		 osMutexAcquire(GNSSMutexHandle, osWaitForever);
-
-		 float64_t lat_mod = fmod(parsed_GNSSData.gpgga_data.xyz.lat, 100.0);
-		 float64_t lon_mod = fmod(parsed_GNSSData.gpgga_data.xyz.lon, 100.0);
-
-		 log_printf("UTC:\t\t\t[ %02d:%02d:%02d ]\n\r",
-		 parsed_GNSSData.gpgga_data.utc.hh,
-		 parsed_GNSSData.gpgga_data.utc.mm,
-		 parsed_GNSSData.gpgga_data.utc.ss);
-
-		 log_printf("Latitude:\t\t[ %.0f' %d'' %c ]\n\r",
-		 (parsed_GNSSData.gpgga_data.xyz.lat - lat_mod) / 100.0,
-		 (int16_t) lat_mod, parsed_GNSSData.gpgga_data.xyz.ns);
-
-		 log_printf("Longitude:\t\t[ %.0f' %d'' %c ]\n\r",
-		 (parsed_GNSSData.gpgga_data.xyz.lon - lon_mod) / 100.0,
-		 (int16_t) lon_mod, parsed_GNSSData.gpgga_data.xyz.ew);
-
-		 log_printf("Satellites locked:\t[ %d ]\n\r",
-		 parsed_GNSSData.gpgga_data.sats);
-
-		 log_printf("Position accuracy:\t[ %.1f ]\n\r",
-		 parsed_GNSSData.gpgga_data.acc);
-
-		 log_printf("Altitude:\t\t[ %.2f%c ]\n\r",
-		 parsed_GNSSData.gpgga_data.xyz.alt,
-		 (parsed_GNSSData.gpgga_data.xyz.mis + 32U));
-
-		 log_printf("Geoid infos:\t\t[ %d%c ]\n\r",
-		 parsed_GNSSData.gpgga_data.geoid.height,
-		 parsed_GNSSData.gpgga_data.geoid.mis);
-		 log_printf("Diff update:\t\t[ %d ]\n\r",
-		 parsed_GNSSData.gpgga_data.update);
-
-		 osMutexRelease(GNSSMutexHandle);
-		 */
-		osDelay(1000);
-	}
-  /* USER CODE END startPrintGPGGA */
 }
 
 /**
@@ -960,14 +719,12 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
   /* USER CODE BEGIN Callback 0 */
 	if (htim->Instance == TIM16) {
-		osThreadFlagsSet(Ack_LSM6DSO_DatHandle, 1);
-		//osThreadFlagsSet(Ack_ToF_DataHandle,1);
-		osThreadFlagsSet(BackTaskGNSSHandle, 1);
+			osThreadFlagsSet(Ack_LSM6DSO_DatHandle, 1);
+			osThreadFlagsSet(Ack_ToF_DataHandle,1);
 
-	} else if (htim->Instance == TIM2) {
-		osThreadFlagsSet(SendDataLSM6Handle, 1);
-		osThreadFlagsSet(SendDataHandle, 1);
-		osThreadFlagsSet(ParserTaskGNSSHandle, 1);
+	}else if(htim->Instance == TIM2){
+			osThreadFlagsSet(SendDataLSM6Handle, 1);
+			osThreadFlagsSet(SendDataHandle, 1);
 	}
   /* USER CODE END Callback 0 */
   if (htim->Instance == TIM17) {
@@ -985,10 +742,11 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 void Error_Handler(void)
 {
   /* USER CODE BEGIN Error_Handler_Debug */
-	/* User can add his own implementation to report the HAL error return state */
-	__disable_irq();
-	while (1) {
-	}
+  /* User can add his own implementation to report the HAL error return state */
+  __disable_irq();
+  while (1)
+  {
+  }
   /* USER CODE END Error_Handler_Debug */
 }
 

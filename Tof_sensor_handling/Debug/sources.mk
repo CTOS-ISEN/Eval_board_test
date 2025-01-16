@@ -24,17 +24,15 @@ C_DEPS :=
 SUBDIRS := \
 Core/Src \
 Core/Startup \
-Drivers/BSP/Components/lis2mdl \
+Drivers/BSP/53L4A2 \
 Drivers/BSP/Components/lsm6dso \
-Drivers/BSP/Components/teseo_liv3f \
-Drivers/BSP/GNSS1A1 \
-Drivers/GNSS_library \
+Drivers/BSP/Components/vl53l4cx/modules \
+Drivers/BSP/Components/vl53l4cx/porting \
+Drivers/BSP/Components/vl53l4cx \
 Drivers/Logger \
 Drivers/MEMS_library \
 Drivers/STM32WBxx_HAL_Driver/Src \
-GNSS/Target \
-Middlewares/ST/lib_gnss/LibGNSS/Src \
-Middlewares/ST/lib_gnss/LibNMEA/Src \
+Drivers/ToF_library \
 Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2 \
 Middlewares/Third_Party/FreeRTOS/Source \
 Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F \

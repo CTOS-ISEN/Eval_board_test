@@ -13,17 +13,15 @@ RM := rm -rf
 -include Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/subdir.mk
 -include Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2/subdir.mk
 -include Middlewares/Third_Party/FreeRTOS/Source/subdir.mk
--include Middlewares/ST/lib_gnss/LibNMEA/Src/subdir.mk
--include Middlewares/ST/lib_gnss/LibGNSS/Src/subdir.mk
--include GNSS/Target/subdir.mk
+-include Drivers/ToF_library/subdir.mk
 -include Drivers/STM32WBxx_HAL_Driver/Src/subdir.mk
 -include Drivers/MEMS_library/subdir.mk
 -include Drivers/Logger/subdir.mk
--include Drivers/GNSS_library/subdir.mk
--include Drivers/BSP/GNSS1A1/subdir.mk
--include Drivers/BSP/Components/teseo_liv3f/subdir.mk
+-include Drivers/BSP/Components/vl53l4cx/porting/subdir.mk
+-include Drivers/BSP/Components/vl53l4cx/modules/subdir.mk
+-include Drivers/BSP/Components/vl53l4cx/subdir.mk
 -include Drivers/BSP/Components/lsm6dso/subdir.mk
--include Drivers/BSP/Components/lis2mdl/subdir.mk
+-include Drivers/BSP/53L4A2/subdir.mk
 -include Core/Startup/subdir.mk
 -include Core/Src/subdir.mk
 -include objects.mk
@@ -75,7 +73,7 @@ main-build: Tof_sensor_handling.elf secondary-outputs
 
 # Tool invocations
 Tof_sensor_handling.elf Tof_sensor_handling.map: $(OBJS) $(USER_OBJS) C:\Users\adrie\STM32CubeIDE\technical_project\Tof_sensor_handling\STM32WB55RGVX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
-	arm-none-eabi-gcc -o "Tof_sensor_handling.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"C:\Users\adrie\STM32CubeIDE\technical_project\Tof_sensor_handling\STM32WB55RGVX_FLASH.ld" --specs=nosys.specs -Wl,-Map="Tof_sensor_handling.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -u _printf_float -Wl,--start-group -lc -lm -Wl,--end-group
+	arm-none-eabi-gcc -o "Tof_sensor_handling.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"C:\Users\adrie\STM32CubeIDE\technical_project\Tof_sensor_handling\STM32WB55RGVX_FLASH.ld" --specs=nosys.specs -Wl,-Map="Tof_sensor_handling.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
 	@echo 'Finished building target: $@'
 	@echo ' '
 

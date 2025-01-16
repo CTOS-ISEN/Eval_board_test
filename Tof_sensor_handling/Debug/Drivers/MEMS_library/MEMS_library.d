@@ -1,6 +1,9 @@
 Drivers/MEMS_library/MEMS_library.o: \
  ../Drivers/MEMS_library/MEMS_library.c \
- ../Drivers/MEMS_library/MEMS_library.h ../Core/Inc/main.h \
+ ../Drivers/MEMS_library/MEMS_library.h \
+ ../Drivers/BSP/Components/lsm6dso/lsm6dso.h \
+ ../Drivers/BSP/Components/lsm6dso/lsm6dso_reg.h \
+ ../Core/Inc/stm32wbxx_nucleo_bus.h ../Core/Inc/stm32wbxx_nucleo_conf.h \
  ../Drivers/STM32WBxx_HAL_Driver/Inc/stm32wbxx_hal.h \
  ../Core/Inc/stm32wbxx_hal_conf.h \
  ../Drivers/STM32WBxx_HAL_Driver/Inc/stm32wbxx_hal_dma.h \
@@ -42,26 +45,31 @@ Drivers/MEMS_library/MEMS_library.o: \
  ../Drivers/STM32WBxx_HAL_Driver/Inc/stm32wbxx_hal_uart.h \
  ../Drivers/STM32WBxx_HAL_Driver/Inc/stm32wbxx_hal_uart_ex.h \
  ../Drivers/STM32WBxx_HAL_Driver/Inc/stm32wbxx_ll_system.h \
- C:/Users/adrie/STM32CubeIDE/technical_project/Tof_sensor_handling/Drivers/MEMS_library/MEMS_library.h \
- C:/Users/adrie/STM32CubeIDE/technical_project/Tof_sensor_handling/Drivers/GNSS_library/GNSS_library.h \
+ ../Core/Inc/stm32wbxx_nucleo_errno.h ../Core/Inc/main.h \
+ C:/Users/adrie/STM32CubeIDE/technical_project/Tof_sensor_handling/Drivers/ToF_library/ToF_library.h \
+ ../Drivers/BSP/53L4A2/53l4a2_ranging_sensor.h \
+ ../Drivers/BSP/Components/Common/ranging_sensor.h \
+ ../TOF/Target/53l4a2_conf.h ../Core/Inc/stm32wbxx_nucleo_errno.h \
+ ../Drivers/BSP/Components/vl53l4cx/vl53l4cx.h \
+ ../Drivers/BSP/Components/vl53l4cx/modules/vl53lx_def.h \
+ ../Drivers/BSP/Components/vl53l4cx/modules/vl53lx_ll_def.h \
+ ../Drivers/BSP/Components/vl53l4cx/porting/vl53lx_platform_user_config.h \
+ ../Drivers/BSP/Components/vl53l4cx/porting/vl53lx_platform_user_defines.h \
+ ../Drivers/BSP/Components/vl53l4cx/modules/vl53lx_error_codes.h \
+ ../Drivers/BSP/Components/vl53l4cx/porting/vl53lx_types.h \
+ ../Drivers/BSP/Components/vl53l4cx/modules/vl53lx_register_structs.h \
+ ../Drivers/BSP/Components/vl53l4cx/modules/vl53lx_register_map.h \
+ ../Drivers/BSP/Components/vl53l4cx/modules/vl53lx_hist_structs.h \
+ ../Drivers/BSP/Components/vl53l4cx/modules/vl53lx_ll_device.h \
+ ../Drivers/BSP/Components/vl53l4cx/modules/vl53lx_dmax_structs.h \
+ ../Drivers/BSP/Components/vl53l4cx/modules/vl53lx_error_exceptions.h \
  C:/Users/adrie/STM32CubeIDE/technical_project/Tof_sensor_handling/Drivers/Logger/logger.h \
- ../Middlewares/ST/lib_gnss/LibGNSS/Inc/gnss_parser.h \
- ../Middlewares/ST/lib_gnss/LibNMEA/Inc/NMEA_parser.h \
- ../Middlewares/ST/lib_gnss/LibGNSS/Inc/gnss_geofence.h \
- ../Middlewares/ST/lib_gnss/LibGNSS/Inc/gnss_datalog.h \
- ../Drivers/BSP/GNSS1A1/gnss1a1_gnss.h ../GNSS/Target/gnss1a1_conf.h \
- ../Core/Inc/stm32wbxx_nucleo_bus.h ../Core/Inc/stm32wbxx_nucleo_conf.h \
- ../Core/Inc/stm32wbxx_nucleo_errno.h ../GNSS/Target/stm32_bus_ex.h \
- ../Core/Inc/stm32wbxx_nucleo_conf.h ../Core/Inc/stm32wbxx_nucleo_errno.h \
- ../Drivers/BSP/Components/teseo_liv3f/teseo_liv3f.h \
- ../Drivers/BSP/Components/teseo_liv3f/teseo_liv3f_queue.h \
- ../GNSS/Target/teseo_liv3f_conf.h \
- ../Drivers/BSP/Components/lsm6dso/lsm6dso.h \
- ../Drivers/BSP/Components/lsm6dso/lsm6dso_reg.h \
- ../Drivers/BSP/Components/lis2mdl/lis2mdl.h \
- ../Drivers/BSP/Components/lis2mdl/lis2mdl_reg.h
+ C:/Users/adrie/STM32CubeIDE/technical_project/Tof_sensor_handling/Drivers/MEMS_library/MEMS_library.h
 ../Drivers/MEMS_library/MEMS_library.h:
-../Core/Inc/main.h:
+../Drivers/BSP/Components/lsm6dso/lsm6dso.h:
+../Drivers/BSP/Components/lsm6dso/lsm6dso_reg.h:
+../Core/Inc/stm32wbxx_nucleo_bus.h:
+../Core/Inc/stm32wbxx_nucleo_conf.h:
 ../Drivers/STM32WBxx_HAL_Driver/Inc/stm32wbxx_hal.h:
 ../Core/Inc/stm32wbxx_hal_conf.h:
 ../Drivers/STM32WBxx_HAL_Driver/Inc/stm32wbxx_hal_dma.h:
@@ -103,25 +111,25 @@ Drivers/MEMS_library/MEMS_library.o: \
 ../Drivers/STM32WBxx_HAL_Driver/Inc/stm32wbxx_hal_uart.h:
 ../Drivers/STM32WBxx_HAL_Driver/Inc/stm32wbxx_hal_uart_ex.h:
 ../Drivers/STM32WBxx_HAL_Driver/Inc/stm32wbxx_ll_system.h:
-C:/Users/adrie/STM32CubeIDE/technical_project/Tof_sensor_handling/Drivers/MEMS_library/MEMS_library.h:
-C:/Users/adrie/STM32CubeIDE/technical_project/Tof_sensor_handling/Drivers/GNSS_library/GNSS_library.h:
+../Core/Inc/stm32wbxx_nucleo_errno.h:
+../Core/Inc/main.h:
+C:/Users/adrie/STM32CubeIDE/technical_project/Tof_sensor_handling/Drivers/ToF_library/ToF_library.h:
+../Drivers/BSP/53L4A2/53l4a2_ranging_sensor.h:
+../Drivers/BSP/Components/Common/ranging_sensor.h:
+../TOF/Target/53l4a2_conf.h:
+../Core/Inc/stm32wbxx_nucleo_errno.h:
+../Drivers/BSP/Components/vl53l4cx/vl53l4cx.h:
+../Drivers/BSP/Components/vl53l4cx/modules/vl53lx_def.h:
+../Drivers/BSP/Components/vl53l4cx/modules/vl53lx_ll_def.h:
+../Drivers/BSP/Components/vl53l4cx/porting/vl53lx_platform_user_config.h:
+../Drivers/BSP/Components/vl53l4cx/porting/vl53lx_platform_user_defines.h:
+../Drivers/BSP/Components/vl53l4cx/modules/vl53lx_error_codes.h:
+../Drivers/BSP/Components/vl53l4cx/porting/vl53lx_types.h:
+../Drivers/BSP/Components/vl53l4cx/modules/vl53lx_register_structs.h:
+../Drivers/BSP/Components/vl53l4cx/modules/vl53lx_register_map.h:
+../Drivers/BSP/Components/vl53l4cx/modules/vl53lx_hist_structs.h:
+../Drivers/BSP/Components/vl53l4cx/modules/vl53lx_ll_device.h:
+../Drivers/BSP/Components/vl53l4cx/modules/vl53lx_dmax_structs.h:
+../Drivers/BSP/Components/vl53l4cx/modules/vl53lx_error_exceptions.h:
 C:/Users/adrie/STM32CubeIDE/technical_project/Tof_sensor_handling/Drivers/Logger/logger.h:
-../Middlewares/ST/lib_gnss/LibGNSS/Inc/gnss_parser.h:
-../Middlewares/ST/lib_gnss/LibNMEA/Inc/NMEA_parser.h:
-../Middlewares/ST/lib_gnss/LibGNSS/Inc/gnss_geofence.h:
-../Middlewares/ST/lib_gnss/LibGNSS/Inc/gnss_datalog.h:
-../Drivers/BSP/GNSS1A1/gnss1a1_gnss.h:
-../GNSS/Target/gnss1a1_conf.h:
-../Core/Inc/stm32wbxx_nucleo_bus.h:
-../Core/Inc/stm32wbxx_nucleo_conf.h:
-../Core/Inc/stm32wbxx_nucleo_errno.h:
-../GNSS/Target/stm32_bus_ex.h:
-../Core/Inc/stm32wbxx_nucleo_conf.h:
-../Core/Inc/stm32wbxx_nucleo_errno.h:
-../Drivers/BSP/Components/teseo_liv3f/teseo_liv3f.h:
-../Drivers/BSP/Components/teseo_liv3f/teseo_liv3f_queue.h:
-../GNSS/Target/teseo_liv3f_conf.h:
-../Drivers/BSP/Components/lsm6dso/lsm6dso.h:
-../Drivers/BSP/Components/lsm6dso/lsm6dso_reg.h:
-../Drivers/BSP/Components/lis2mdl/lis2mdl.h:
-../Drivers/BSP/Components/lis2mdl/lis2mdl_reg.h:
+C:/Users/adrie/STM32CubeIDE/technical_project/Tof_sensor_handling/Drivers/MEMS_library/MEMS_library.h:

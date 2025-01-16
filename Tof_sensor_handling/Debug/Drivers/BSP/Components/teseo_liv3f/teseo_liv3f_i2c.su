@@ -1,4 +1,0 @@
-../Drivers/BSP/Components/teseo_liv3f/teseo_liv3f_i2c.c:89:13:i2c_fsm	24	static
-../Drivers/BSP/Components/teseo_liv3f/teseo_liv3f_i2c.c:182:6:teseo_i2c_rx_callback	24	static
-../Drivers/BSP/Components/teseo_liv3f/teseo_liv3f_i2c.c:233:6:teseo_i2c_onoff	16	static
-../Drivers/BSP/Components/teseo_liv3f/teseo_liv3f_i2c.c:267:6:teseo_i2c_background_process	16	static

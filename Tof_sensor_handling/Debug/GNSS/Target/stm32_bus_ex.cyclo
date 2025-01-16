@@ -1,4 +1,0 @@
-../GNSS/Target/stm32_bus_ex.c:30:9:BSP_I2C1_Send_IT	2
-../GNSS/Target/stm32_bus_ex.c:53:9:BSP_I2C1_Recv_IT	2
-../GNSS/Target/stm32_bus_ex.c:95:6:BSP_EV_I2C1_IRQHanlder	1
-../GNSS/Target/stm32_bus_ex.c:100:6:BSP_ER_I2C1_IRQHanlder	1

@@ -7,7 +7,7 @@
   ******************************************************************************
   * @attention
   *
-  * Copyright (c) 2025 STMicroelectronics.
+  * Copyright (c) 2024 STMicroelectronics.
   * All rights reserved.
   *
   * This software is licensed under terms that can be found in the LICENSE file
@@ -22,15 +22,9 @@
 #define  __RTE_COMPONENTS_H__
 
 /* Defines ------------------------------------------------------------------*/
-/* STMicroelectronics.X-CUBE-GNSS1.6.0.0 */
-#define TESEO_LIV3F
-#define USE_CMSIS_FREERTOS
-#define LIB_GNSS
-#define LIB_NMEA
-#define LIB_GNSS_INTERFACE
-#define GNSS1A1
 /* STMicroelectronics.X-CUBE-MEMS1.11.0.0 */
 #define LSM6DSO_ACCGYR_I2C
-#define LIS2MDL_MAG_I2C
+/* STMicroelectronics.X-CUBE-TOF1.3.4.2 */
+#define _53L4A2
 
 #endif /* __RTE_COMPONENTS_H__ */
