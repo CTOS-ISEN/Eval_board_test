@@ -23,7 +23,8 @@
 
 /* Defines ------------------------------------------------------------------*/
 /* STMicroelectronics.X-CUBE-MEMS1.11.0.0 */
-#define IKS01A3
+#define LSM6DSO_ACCGYR_I2C
+#define LIS2MDL_MAG_I2C
 /* STMicroelectronics.X-CUBE-TOF1.3.4.2 */
 #define VL53L4CX
 #define BSP_RANGING_SENSOR

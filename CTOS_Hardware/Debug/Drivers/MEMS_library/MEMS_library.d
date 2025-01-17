@@ -1,8 +1,6 @@
 Drivers/MEMS_library/MEMS_library.o: \
  ../Drivers/MEMS_library/MEMS_library.c \
- ../Drivers/MEMS_library/MEMS_library.h \
- ../Drivers/BSP/IKS01A3/iks01a3_motion_sensors.h \
- ../X-CUBE-MEMS1/Target/iks01a3_conf.h \
+ ../Drivers/MEMS_library/MEMS_library.h ../Core/Inc/main.h \
  ../Drivers/STM32WBxx_HAL_Driver/Inc/stm32wbxx_hal.h \
  ../Core/Inc/stm32wbxx_hal_conf.h \
  ../Drivers/STM32WBxx_HAL_Driver/Inc/stm32wbxx_hal_dma.h \
@@ -39,26 +37,37 @@ Drivers/MEMS_library/MEMS_library.o: \
  ../Drivers/STM32WBxx_HAL_Driver/Inc/stm32wbxx_ll_bus.h \
  ../Drivers/STM32WBxx_HAL_Driver/Inc/stm32wbxx_hal_rcc_ex.h \
  ../Drivers/STM32WBxx_HAL_Driver/Inc/stm32wbxx_ll_crs.h \
- ../Drivers/STM32WBxx_HAL_Driver/Inc/stm32wbxx_hal_spi.h \
- ../Drivers/STM32WBxx_HAL_Driver/Inc/stm32wbxx_hal_spi_ex.h \
  ../Drivers/STM32WBxx_HAL_Driver/Inc/stm32wbxx_hal_tim.h \
  ../Drivers/STM32WBxx_HAL_Driver/Inc/stm32wbxx_hal_tim_ex.h \
  ../Drivers/STM32WBxx_HAL_Driver/Inc/stm32wbxx_hal_uart.h \
  ../Drivers/STM32WBxx_HAL_Driver/Inc/stm32wbxx_hal_uart_ex.h \
  ../Drivers/STM32WBxx_HAL_Driver/Inc/stm32wbxx_ll_system.h \
+ C:/Users/adrie/STM32CubeIDE/technical_project/CTOS_Hardware/Drivers/ToF_library/ToF_library.h \
+ C:/Users/adrie/STM32CubeIDE/technical_project/CTOS_Hardware/Drivers/Logger/logger.h \
+ ../TOF/Target/custom_ranging_sensor.h ../TOF/Target/custom_tof_conf.h \
  ../Core/Inc/stm32wbxx_nucleo_bus.h ../Core/Inc/stm32wbxx_nucleo_conf.h \
  ../Core/Inc/stm32wbxx_nucleo_errno.h \
- ../Core/Inc/stm32wbxx_nucleo_errno.h \
- ../Drivers/BSP/Components/Common/motion_sensor.h \
+ ../Core/Inc/stm32wbxx_nucleo_errno.h ../TOF/Target/ranging_sensor.h \
+ ../Drivers/BSP/Components/vl53l4cx/vl53l4cx.h \
+ ../Drivers/BSP/Components/vl53l4cx/modules/vl53lx_def.h \
+ ../Drivers/BSP/Components/vl53l4cx/modules/vl53lx_ll_def.h \
+ ../Drivers/BSP/Components/vl53l4cx/porting/vl53lx_platform_user_config.h \
+ ../Drivers/BSP/Components/vl53l4cx/porting/vl53lx_platform_user_defines.h \
+ ../Drivers/BSP/Components/vl53l4cx/modules/vl53lx_error_codes.h \
+ ../Drivers/BSP/Components/vl53l4cx/porting/vl53lx_types.h \
+ ../Drivers/BSP/Components/vl53l4cx/modules/vl53lx_register_structs.h \
+ ../Drivers/BSP/Components/vl53l4cx/modules/vl53lx_register_map.h \
+ ../Drivers/BSP/Components/vl53l4cx/modules/vl53lx_hist_structs.h \
+ ../Drivers/BSP/Components/vl53l4cx/modules/vl53lx_ll_device.h \
+ ../Drivers/BSP/Components/vl53l4cx/modules/vl53lx_dmax_structs.h \
+ ../Drivers/BSP/Components/vl53l4cx/modules/vl53lx_error_exceptions.h \
+ C:/Users/adrie/STM32CubeIDE/technical_project/CTOS_Hardware/Drivers/MEMS_library/MEMS_library.h \
  ../Drivers/BSP/Components/lsm6dso/lsm6dso.h \
  ../Drivers/BSP/Components/lsm6dso/lsm6dso_reg.h \
- ../Drivers/BSP/Components/lis2dw12/lis2dw12.h \
- ../Drivers/BSP/Components/lis2dw12/lis2dw12_reg.h \
  ../Drivers/BSP/Components/lis2mdl/lis2mdl.h \
  ../Drivers/BSP/Components/lis2mdl/lis2mdl_reg.h
 ../Drivers/MEMS_library/MEMS_library.h:
-../Drivers/BSP/IKS01A3/iks01a3_motion_sensors.h:
-../X-CUBE-MEMS1/Target/iks01a3_conf.h:
+../Core/Inc/main.h:
 ../Drivers/STM32WBxx_HAL_Driver/Inc/stm32wbxx_hal.h:
 ../Core/Inc/stm32wbxx_hal_conf.h:
 ../Drivers/STM32WBxx_HAL_Driver/Inc/stm32wbxx_hal_dma.h:
@@ -95,21 +104,35 @@ Drivers/MEMS_library/MEMS_library.o: \
 ../Drivers/STM32WBxx_HAL_Driver/Inc/stm32wbxx_ll_bus.h:
 ../Drivers/STM32WBxx_HAL_Driver/Inc/stm32wbxx_hal_rcc_ex.h:
 ../Drivers/STM32WBxx_HAL_Driver/Inc/stm32wbxx_ll_crs.h:
-../Drivers/STM32WBxx_HAL_Driver/Inc/stm32wbxx_hal_spi.h:
-../Drivers/STM32WBxx_HAL_Driver/Inc/stm32wbxx_hal_spi_ex.h:
 ../Drivers/STM32WBxx_HAL_Driver/Inc/stm32wbxx_hal_tim.h:
 ../Drivers/STM32WBxx_HAL_Driver/Inc/stm32wbxx_hal_tim_ex.h:
 ../Drivers/STM32WBxx_HAL_Driver/Inc/stm32wbxx_hal_uart.h:
 ../Drivers/STM32WBxx_HAL_Driver/Inc/stm32wbxx_hal_uart_ex.h:
 ../Drivers/STM32WBxx_HAL_Driver/Inc/stm32wbxx_ll_system.h:
+C:/Users/adrie/STM32CubeIDE/technical_project/CTOS_Hardware/Drivers/ToF_library/ToF_library.h:
+C:/Users/adrie/STM32CubeIDE/technical_project/CTOS_Hardware/Drivers/Logger/logger.h:
+../TOF/Target/custom_ranging_sensor.h:
+../TOF/Target/custom_tof_conf.h:
 ../Core/Inc/stm32wbxx_nucleo_bus.h:
 ../Core/Inc/stm32wbxx_nucleo_conf.h:
 ../Core/Inc/stm32wbxx_nucleo_errno.h:
 ../Core/Inc/stm32wbxx_nucleo_errno.h:
-../Drivers/BSP/Components/Common/motion_sensor.h:
+../TOF/Target/ranging_sensor.h:
+../Drivers/BSP/Components/vl53l4cx/vl53l4cx.h:
+../Drivers/BSP/Components/vl53l4cx/modules/vl53lx_def.h:
+../Drivers/BSP/Components/vl53l4cx/modules/vl53lx_ll_def.h:
+../Drivers/BSP/Components/vl53l4cx/porting/vl53lx_platform_user_config.h:
+../Drivers/BSP/Components/vl53l4cx/porting/vl53lx_platform_user_defines.h:
+../Drivers/BSP/Components/vl53l4cx/modules/vl53lx_error_codes.h:
+../Drivers/BSP/Components/vl53l4cx/porting/vl53lx_types.h:
+../Drivers/BSP/Components/vl53l4cx/modules/vl53lx_register_structs.h:
+../Drivers/BSP/Components/vl53l4cx/modules/vl53lx_register_map.h:
+../Drivers/BSP/Components/vl53l4cx/modules/vl53lx_hist_structs.h:
+../Drivers/BSP/Components/vl53l4cx/modules/vl53lx_ll_device.h:
+../Drivers/BSP/Components/vl53l4cx/modules/vl53lx_dmax_structs.h:
+../Drivers/BSP/Components/vl53l4cx/modules/vl53lx_error_exceptions.h:
+C:/Users/adrie/STM32CubeIDE/technical_project/CTOS_Hardware/Drivers/MEMS_library/MEMS_library.h:
 ../Drivers/BSP/Components/lsm6dso/lsm6dso.h:
 ../Drivers/BSP/Components/lsm6dso/lsm6dso_reg.h:
-../Drivers/BSP/Components/lis2dw12/lis2dw12.h:
-../Drivers/BSP/Components/lis2dw12/lis2dw12_reg.h:
 ../Drivers/BSP/Components/lis2mdl/lis2mdl.h:
 ../Drivers/BSP/Components/lis2mdl/lis2mdl_reg.h:
