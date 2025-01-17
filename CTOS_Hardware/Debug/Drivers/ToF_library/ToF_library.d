@@ -1,8 +1,5 @@
 Drivers/ToF_library/ToF_library.o: ../Drivers/ToF_library/ToF_library.c \
- ../Drivers/ToF_library/ToF_library.h \
- ../Drivers/BSP/53L4A2/53l4a2_ranging_sensor.h \
- ../Drivers/BSP/Components/Common/ranging_sensor.h \
- ../TOF/Target/53l4a2_conf.h \
+ ../Drivers/ToF_library/ToF_library.h ../Core/Inc/main.h \
  ../Drivers/STM32WBxx_HAL_Driver/Inc/stm32wbxx_hal.h \
  ../Core/Inc/stm32wbxx_hal_conf.h \
  ../Drivers/STM32WBxx_HAL_Driver/Inc/stm32wbxx_hal_dma.h \
@@ -44,9 +41,18 @@ Drivers/ToF_library/ToF_library.o: ../Drivers/ToF_library/ToF_library.c \
  ../Drivers/STM32WBxx_HAL_Driver/Inc/stm32wbxx_hal_uart.h \
  ../Drivers/STM32WBxx_HAL_Driver/Inc/stm32wbxx_hal_uart_ex.h \
  ../Drivers/STM32WBxx_HAL_Driver/Inc/stm32wbxx_ll_system.h \
+ C:/Users/adrie/STM32CubeIDE/technical_project/CTOS_Hardware/Drivers/ToF_library/ToF_library.h \
+ C:/Users/adrie/STM32CubeIDE/technical_project/CTOS_Hardware/Drivers/MEMS_library/MEMS_library.h \
+ ../Core/Inc/stm32wbxx_nucleo_errno.h \
+ ../Drivers/BSP/Components/lsm6dso/lsm6dso.h \
+ ../Drivers/BSP/Components/lsm6dso/lsm6dso_reg.h \
+ ../Drivers/BSP/Components/lis2mdl/lis2mdl.h \
+ ../Drivers/BSP/Components/lis2mdl/lis2mdl_reg.h \
  ../Core/Inc/stm32wbxx_nucleo_bus.h ../Core/Inc/stm32wbxx_nucleo_conf.h \
  ../Core/Inc/stm32wbxx_nucleo_errno.h \
- ../Core/Inc/stm32wbxx_nucleo_errno.h \
+ C:/Users/adrie/STM32CubeIDE/technical_project/CTOS_Hardware/Drivers/Logger/logger.h \
+ ../TOF/Target/custom_ranging_sensor.h ../TOF/Target/custom_tof_conf.h \
+ ../TOF/Target/ranging_sensor.h \
  ../Drivers/BSP/Components/vl53l4cx/vl53l4cx.h \
  ../Drivers/BSP/Components/vl53l4cx/modules/vl53lx_def.h \
  ../Drivers/BSP/Components/vl53l4cx/modules/vl53lx_ll_def.h \
@@ -59,17 +65,9 @@ Drivers/ToF_library/ToF_library.o: ../Drivers/ToF_library/ToF_library.c \
  ../Drivers/BSP/Components/vl53l4cx/modules/vl53lx_hist_structs.h \
  ../Drivers/BSP/Components/vl53l4cx/modules/vl53lx_ll_device.h \
  ../Drivers/BSP/Components/vl53l4cx/modules/vl53lx_dmax_structs.h \
- ../Drivers/BSP/Components/vl53l4cx/modules/vl53lx_error_exceptions.h \
- ../Core/Inc/main.h \
- C:/Users/adrie/STM32CubeIDE/technical_project/Tof_sensor_handling/Drivers/ToF_library/ToF_library.h \
- C:/Users/adrie/STM32CubeIDE/technical_project/Tof_sensor_handling/Drivers/MEMS_library/MEMS_library.h \
- ../Drivers/BSP/Components/lsm6dso/lsm6dso.h \
- ../Drivers/BSP/Components/lsm6dso/lsm6dso_reg.h \
- C:/Users/adrie/STM32CubeIDE/technical_project/Tof_sensor_handling/Drivers/Logger/logger.h
+ ../Drivers/BSP/Components/vl53l4cx/modules/vl53lx_error_exceptions.h
 ../Drivers/ToF_library/ToF_library.h:
-../Drivers/BSP/53L4A2/53l4a2_ranging_sensor.h:
-../Drivers/BSP/Components/Common/ranging_sensor.h:
-../TOF/Target/53l4a2_conf.h:
+../Core/Inc/main.h:
 ../Drivers/STM32WBxx_HAL_Driver/Inc/stm32wbxx_hal.h:
 ../Core/Inc/stm32wbxx_hal_conf.h:
 ../Drivers/STM32WBxx_HAL_Driver/Inc/stm32wbxx_hal_dma.h:
@@ -111,10 +109,20 @@ Drivers/ToF_library/ToF_library.o: ../Drivers/ToF_library/ToF_library.c \
 ../Drivers/STM32WBxx_HAL_Driver/Inc/stm32wbxx_hal_uart.h:
 ../Drivers/STM32WBxx_HAL_Driver/Inc/stm32wbxx_hal_uart_ex.h:
 ../Drivers/STM32WBxx_HAL_Driver/Inc/stm32wbxx_ll_system.h:
+C:/Users/adrie/STM32CubeIDE/technical_project/CTOS_Hardware/Drivers/ToF_library/ToF_library.h:
+C:/Users/adrie/STM32CubeIDE/technical_project/CTOS_Hardware/Drivers/MEMS_library/MEMS_library.h:
+../Core/Inc/stm32wbxx_nucleo_errno.h:
+../Drivers/BSP/Components/lsm6dso/lsm6dso.h:
+../Drivers/BSP/Components/lsm6dso/lsm6dso_reg.h:
+../Drivers/BSP/Components/lis2mdl/lis2mdl.h:
+../Drivers/BSP/Components/lis2mdl/lis2mdl_reg.h:
 ../Core/Inc/stm32wbxx_nucleo_bus.h:
 ../Core/Inc/stm32wbxx_nucleo_conf.h:
 ../Core/Inc/stm32wbxx_nucleo_errno.h:
-../Core/Inc/stm32wbxx_nucleo_errno.h:
+C:/Users/adrie/STM32CubeIDE/technical_project/CTOS_Hardware/Drivers/Logger/logger.h:
+../TOF/Target/custom_ranging_sensor.h:
+../TOF/Target/custom_tof_conf.h:
+../TOF/Target/ranging_sensor.h:
 ../Drivers/BSP/Components/vl53l4cx/vl53l4cx.h:
 ../Drivers/BSP/Components/vl53l4cx/modules/vl53lx_def.h:
 ../Drivers/BSP/Components/vl53l4cx/modules/vl53lx_ll_def.h:
@@ -128,9 +136,3 @@ Drivers/ToF_library/ToF_library.o: ../Drivers/ToF_library/ToF_library.c \
 ../Drivers/BSP/Components/vl53l4cx/modules/vl53lx_ll_device.h:
 ../Drivers/BSP/Components/vl53l4cx/modules/vl53lx_dmax_structs.h:
 ../Drivers/BSP/Components/vl53l4cx/modules/vl53lx_error_exceptions.h:
-../Core/Inc/main.h:
-C:/Users/adrie/STM32CubeIDE/technical_project/Tof_sensor_handling/Drivers/ToF_library/ToF_library.h:
-C:/Users/adrie/STM32CubeIDE/technical_project/Tof_sensor_handling/Drivers/MEMS_library/MEMS_library.h:
-../Drivers/BSP/Components/lsm6dso/lsm6dso.h:
-../Drivers/BSP/Components/lsm6dso/lsm6dso_reg.h:
-C:/Users/adrie/STM32CubeIDE/technical_project/Tof_sensor_handling/Drivers/Logger/logger.h:

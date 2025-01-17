@@ -98,7 +98,7 @@ const osMessageQueueAttr_t ToFData_Queue_attributes = {
 };
 /* Definitions for LSM6DSOData_Queue */
 osMessageQueueId_t LSM6DSOData_QueueHandle;
-uint8_t LSM6DSOData_QueueBuffer[ 16 * sizeof( LSM6DSO_data ) ];
+uint8_t LSM6DSOData_QueueBuffer[ 16 * sizeof( IMU_Data ) ];
 osStaticMessageQDef_t LSM6DSOData_QueueControlBlock;
 const osMessageQueueAttr_t LSM6DSOData_Queue_attributes = {
   .name = "LSM6DSOData_Queue",
@@ -189,14 +189,11 @@ int main(void)
 
   log_init(&huart1);
   ToF_init();
-  IKS01A3_MOTION_SENSOR_Init(IKS01A3_LSM6DSO_0, MOTION_GYRO);
-    IKS01A3_MOTION_SENSOR_Init(1, MOTION_ACCELERO);
+  MyInitLSM6DSO();
+  MyInitLIS2MDL();
+  MyEnableLSM6DSO();
+  MyEnableLIS2MDL();
 
-    IKS01A3_MOTION_SENSOR_Enable(IKS01A3_LSM6DSO_0, MOTION_GYRO);
-    IKS01A3_MOTION_SENSOR_Enable(1, MOTION_ACCELERO);
-
-      //IKS01A3_LIS2DW12_0;
-      CalibrationLSM6DSO();
       HAL_TIM_Base_Start_IT(&htim16);
       HAL_TIM_Base_Start_IT(&htim2);
   /* USER CODE END 2 */
@@ -224,7 +221,7 @@ int main(void)
   ToFData_QueueHandle = osMessageQueueNew (16, sizeof(RANGING_SENSOR_Result_t), &ToFData_Queue_attributes);
 
   /* creation of LSM6DSOData_Queue */
-  LSM6DSOData_QueueHandle = osMessageQueueNew (16, sizeof(LSM6DSO_data), &LSM6DSOData_Queue_attributes);
+  LSM6DSOData_QueueHandle = osMessageQueueNew (16, sizeof(IMU_Data), &LSM6DSOData_Queue_attributes);
 
   /* USER CODE BEGIN RTOS_QUEUES */
   /* add queues, ... */
@@ -538,6 +535,9 @@ static void MX_GPIO_Init(void)
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOB, LD2_Pin|LD3_Pin|LD1_Pin, GPIO_PIN_RESET);
 
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(VL53L4CX_XSHUT_GPIO_Port, VL53L4CX_XSHUT_Pin, GPIO_PIN_RESET);
+
   /*Configure GPIO pin : B1_Pin */
   GPIO_InitStruct.Pin = B1_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
@@ -550,6 +550,13 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : VL53L4CX_XSHUT_Pin */
+  GPIO_InitStruct.Pin = VL53L4CX_XSHUT_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(VL53L4CX_XSHUT_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pin : B2_Pin */
   GPIO_InitStruct.Pin = B2_Pin;
@@ -665,12 +672,9 @@ void StartAck_LSM6DSO_Data(void *argument)
   for(;;)
   {
 		osThreadFlagsWait(1, osFlagsWaitAny, osWaitForever);
-		LSM6DSO_data mov_data;
-		mov_data = InitLSM6DSO_Struct(mov_data);
-		IKS01A3_MOTION_SENSOR_GetAxes(IKS01A3_LSM6DSO_0, MOTION_GYRO,
-				&mov_data.axes_gyro);
-		IKS01A3_MOTION_SENSOR_GetAxes(1, MOTION_ACCELERO, &mov_data.axes_acce);
-		mov_data = CalibratedGet(mov_data);
+		IMU_Data mov_data;
+		MyGettingLSM6DSO(&mov_data.Acc, &mov_data.Gyr);
+		MyGettingLIS2MDL(&mov_data.Mag);
 		/*printf(
 				"Xgyro: %ld | Ygyro: %ld | Zgyro: %ld | Xacc: %ld | Yacc: %ld | Zacc: %ld\n",
 				mov_data.axes_gyro.x, mov_data.axes_gyro.y,
@@ -698,16 +702,17 @@ void StartSendDataLSM6(void *argument)
   {
 		osThreadFlagsWait(1, osFlagsWaitAny, osWaitForever);
 		osMutexAcquire(MutexSendHandle, osWaitForever);
-		LSM6DSO_data send_data;
+		IMU_Data send_data;
 		while(osMessageQueueGetCount(LSM6DSOData_QueueHandle)>0) {
-			send_data = InitLSM6DSO_Struct(send_data);
 			osMessageQueueGet(LSM6DSOData_QueueHandle, &send_data, (uint8_t*) 1,
 					osWaitForever);
 			log_printf(
-					"SEND : Xgyro: %ld | Ygyro: %ld | Zgyro: %ld | Xacc: %ld | Yacc: %ld | Zacc: %ld\n",
-					send_data.axes_gyro.x, send_data.axes_gyro.y,
-					send_data.axes_gyro.z, send_data.axes_acce.x,
-					send_data.axes_acce.y, send_data.axes_acce.z);
+								"SEND : Xgyro: %ld | Ygyro: %ld | Zgyro: %ld | Xacc: %ld | Yacc: %ld | Zacc: %ld | Xmag: %ld | Ymag : %ld | Zmag : %ld\n\r",
+								send_data.Gyr.x, send_data.Gyr.y,
+								send_data.Gyr.z, send_data.Acc.x,
+								send_data.Acc.y, send_data.Acc.z,
+								send_data.Mag.x, send_data.Mag.y,
+								send_data.Mag.z);
 		}
 		printf("Send at : %ld\n", osKernelGetTickCount());
 		osMutexRelease(MutexSendHandle);

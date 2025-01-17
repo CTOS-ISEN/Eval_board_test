@@ -35,15 +35,13 @@ Core/Src/stm32wbxx_it.o: ../Core/Src/stm32wbxx_it.c ../Core/Inc/main.h \
  ../Drivers/STM32WBxx_HAL_Driver/Inc/stm32wbxx_ll_bus.h \
  ../Drivers/STM32WBxx_HAL_Driver/Inc/stm32wbxx_hal_rcc_ex.h \
  ../Drivers/STM32WBxx_HAL_Driver/Inc/stm32wbxx_ll_crs.h \
- ../Drivers/STM32WBxx_HAL_Driver/Inc/stm32wbxx_hal_spi.h \
- ../Drivers/STM32WBxx_HAL_Driver/Inc/stm32wbxx_hal_spi_ex.h \
  ../Drivers/STM32WBxx_HAL_Driver/Inc/stm32wbxx_hal_tim.h \
  ../Drivers/STM32WBxx_HAL_Driver/Inc/stm32wbxx_hal_tim_ex.h \
  ../Drivers/STM32WBxx_HAL_Driver/Inc/stm32wbxx_hal_uart.h \
  ../Drivers/STM32WBxx_HAL_Driver/Inc/stm32wbxx_hal_uart_ex.h \
  ../Drivers/STM32WBxx_HAL_Driver/Inc/stm32wbxx_ll_system.h \
- D:/Github/Eval_board_test/ToF_sensor/Drivers/ToF_library/ToF_library.h \
- D:/Github/Eval_board_test/ToF_sensor/Drivers/Logger/logger.h \
+ C:/Users/adrie/STM32CubeIDE/technical_project/CTOS_Hardware/Drivers/ToF_library/ToF_library.h \
+ C:/Users/adrie/STM32CubeIDE/technical_project/CTOS_Hardware/Drivers/Logger/logger.h \
  ../TOF/Target/custom_ranging_sensor.h ../TOF/Target/custom_tof_conf.h \
  ../Core/Inc/stm32wbxx_nucleo_bus.h ../Core/Inc/stm32wbxx_nucleo_conf.h \
  ../Core/Inc/stm32wbxx_nucleo_errno.h \
@@ -61,14 +59,9 @@ Core/Src/stm32wbxx_it.o: ../Core/Src/stm32wbxx_it.c ../Core/Inc/main.h \
  ../Drivers/BSP/Components/vl53l4cx/modules/vl53lx_ll_device.h \
  ../Drivers/BSP/Components/vl53l4cx/modules/vl53lx_dmax_structs.h \
  ../Drivers/BSP/Components/vl53l4cx/modules/vl53lx_error_exceptions.h \
- D:/Github/Eval_board_test/ToF_sensor/Drivers/MEMS_library/MEMS_library.h \
- ../Drivers/BSP/IKS01A3/iks01a3_motion_sensors.h \
- ../X-CUBE-MEMS1/Target/iks01a3_conf.h \
- ../Drivers/BSP/Components/Common/motion_sensor.h \
+ C:/Users/adrie/STM32CubeIDE/technical_project/CTOS_Hardware/Drivers/MEMS_library/MEMS_library.h \
  ../Drivers/BSP/Components/lsm6dso/lsm6dso.h \
  ../Drivers/BSP/Components/lsm6dso/lsm6dso_reg.h \
- ../Drivers/BSP/Components/lis2dw12/lis2dw12.h \
- ../Drivers/BSP/Components/lis2dw12/lis2dw12_reg.h \
  ../Drivers/BSP/Components/lis2mdl/lis2mdl.h \
  ../Drivers/BSP/Components/lis2mdl/lis2mdl_reg.h \
  ../Core/Inc/stm32wbxx_it.h
@@ -109,15 +102,13 @@ Core/Src/stm32wbxx_it.o: ../Core/Src/stm32wbxx_it.c ../Core/Inc/main.h \
 ../Drivers/STM32WBxx_HAL_Driver/Inc/stm32wbxx_ll_bus.h:
 ../Drivers/STM32WBxx_HAL_Driver/Inc/stm32wbxx_hal_rcc_ex.h:
 ../Drivers/STM32WBxx_HAL_Driver/Inc/stm32wbxx_ll_crs.h:
-../Drivers/STM32WBxx_HAL_Driver/Inc/stm32wbxx_hal_spi.h:
-../Drivers/STM32WBxx_HAL_Driver/Inc/stm32wbxx_hal_spi_ex.h:
 ../Drivers/STM32WBxx_HAL_Driver/Inc/stm32wbxx_hal_tim.h:
 ../Drivers/STM32WBxx_HAL_Driver/Inc/stm32wbxx_hal_tim_ex.h:
 ../Drivers/STM32WBxx_HAL_Driver/Inc/stm32wbxx_hal_uart.h:
 ../Drivers/STM32WBxx_HAL_Driver/Inc/stm32wbxx_hal_uart_ex.h:
 ../Drivers/STM32WBxx_HAL_Driver/Inc/stm32wbxx_ll_system.h:
-D:/Github/Eval_board_test/ToF_sensor/Drivers/ToF_library/ToF_library.h:
-D:/Github/Eval_board_test/ToF_sensor/Drivers/Logger/logger.h:
+C:/Users/adrie/STM32CubeIDE/technical_project/CTOS_Hardware/Drivers/ToF_library/ToF_library.h:
+C:/Users/adrie/STM32CubeIDE/technical_project/CTOS_Hardware/Drivers/Logger/logger.h:
 ../TOF/Target/custom_ranging_sensor.h:
 ../TOF/Target/custom_tof_conf.h:
 ../Core/Inc/stm32wbxx_nucleo_bus.h:
@@ -138,14 +129,9 @@ D:/Github/Eval_board_test/ToF_sensor/Drivers/Logger/logger.h:
 ../Drivers/BSP/Components/vl53l4cx/modules/vl53lx_ll_device.h:
 ../Drivers/BSP/Components/vl53l4cx/modules/vl53lx_dmax_structs.h:
 ../Drivers/BSP/Components/vl53l4cx/modules/vl53lx_error_exceptions.h:
-D:/Github/Eval_board_test/ToF_sensor/Drivers/MEMS_library/MEMS_library.h:
-../Drivers/BSP/IKS01A3/iks01a3_motion_sensors.h:
-../X-CUBE-MEMS1/Target/iks01a3_conf.h:
-../Drivers/BSP/Components/Common/motion_sensor.h:
+C:/Users/adrie/STM32CubeIDE/technical_project/CTOS_Hardware/Drivers/MEMS_library/MEMS_library.h:
 ../Drivers/BSP/Components/lsm6dso/lsm6dso.h:
 ../Drivers/BSP/Components/lsm6dso/lsm6dso_reg.h:
-../Drivers/BSP/Components/lis2dw12/lis2dw12.h:
-../Drivers/BSP/Components/lis2dw12/lis2dw12_reg.h:
 ../Drivers/BSP/Components/lis2mdl/lis2mdl.h:
 ../Drivers/BSP/Components/lis2mdl/lis2mdl_reg.h:
 ../Core/Inc/stm32wbxx_it.h:

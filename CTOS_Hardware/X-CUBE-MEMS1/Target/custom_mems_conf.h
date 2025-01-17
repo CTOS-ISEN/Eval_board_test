@@ -1,13 +1,12 @@
 /**
   ******************************************************************************
-  * @file    custom_tof_conf.h
-  * @author  IMG SW Application Team
-  * @brief   This file contains definitions of the TOF components bus interfaces
-  *          for custom boards
+  * @file    custom_mems_conf.h
+  * @author  MEMS Software Solutions Team
+  * @brief   This file contains definitions of the MEMS components bus interfaces for custom boards
   ******************************************************************************
   * @attention
   *
-  * Copyright (c) 2023 STMicroelectronics.
+  * Copyright (c) 2025 STMicroelectronics.
   * All rights reserved.
   *
   * This software is licensed under terms that can be found in the LICENSE file
@@ -18,8 +17,8 @@
   */
 
 /* Define to prevent recursive inclusion -------------------------------------*/
-#ifndef __CUSTOM_TOF_CONF_H__
-#define __CUSTOM_TOF_CONF_H__
+#ifndef CUSTOM_MEMS_CONF_H
+#define CUSTOM_MEMS_CONF_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -34,18 +33,22 @@ extern "C" {
 
 /* USER CODE END 1 */
 
-#define USE_CUSTOM_RANGING_VL53L4CX (1U)
+#define USE_CUSTOM_MOTION_SENSOR_LSM6DSO_0        0U
 
-#define CUSTOM_VL53L4CX_XSHUT_PORT    GPIOA
-#define CUSTOM_VL53L4CX_XSHUT_PIN     GPIO_PIN_10
+#define USE_CUSTOM_MOTION_SENSOR_LIS2MDL_0        0U
 
-#define CUSTOM_VL53L4CX_I2C_INIT      BSP_I2C1_Init
-#define CUSTOM_VL53L4CX_I2C_DEINIT    BSP_I2C1_DeInit
-#define CUSTOM_VL53L4CX_I2C_WRITEREG  BSP_I2C1_Send
-#define CUSTOM_VL53L4CX_I2C_READREG   BSP_I2C1_Recv
+#define CUSTOM_LSM6DSO_0_I2C_Init BSP_I2C1_Init
+#define CUSTOM_LSM6DSO_0_I2C_DeInit BSP_I2C1_DeInit
+#define CUSTOM_LSM6DSO_0_I2C_ReadReg BSP_I2C1_ReadReg
+#define CUSTOM_LSM6DSO_0_I2C_WriteReg BSP_I2C1_WriteReg
+
+#define CUSTOM_LIS2MDL_0_I2C_Init BSP_I2C1_Init
+#define CUSTOM_LIS2MDL_0_I2C_DeInit BSP_I2C1_DeInit
+#define CUSTOM_LIS2MDL_0_I2C_ReadReg BSP_I2C1_ReadReg
+#define CUSTOM_LIS2MDL_0_I2C_WriteReg BSP_I2C1_WriteReg
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* __CUSTOM_TOF_CONF_H__*/
+#endif /* CUSTOM_MEMS_CONF_H*/

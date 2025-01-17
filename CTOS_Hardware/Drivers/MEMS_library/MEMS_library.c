@@ -7,56 +7,57 @@
 
 #include "MEMS_library.h"
 
-int32_t gyrxcalib = 0, gyrycalib = 0, gyrzcalib = 0, accxcalib = 0, accycalib = 0, acczcalib = 0;
+static LSM6DSO_Object_t lsm6dso_obj_0;
+static LIS2MDL_Object_t lis2mdl_obj_0;
 
-void CalibrationLSM6DSO(){
-	LSM6DSO_data calib_data;
-	calib_data = InitLSM6DSO_Struct(calib_data);
+void MyInitLSM6DSO(void){
+	LSM6DSO_IO_t io_ctx;
+	io_ctx.BusType     = LSM6DSO_I2C_BUS;
+	io_ctx.Address     = LSM6DSO_I2C_ADD_H;
+	io_ctx.Init        = LSM6DSO_I2C_INIT;
+	io_ctx.DeInit      = LSM6DSO_I2C_DEINIT;
+	io_ctx.ReadReg     = LSM6DSO_I2C_READ_REG;
+	io_ctx.WriteReg    = LSM6DSO_I2C_WRITE_REG;
+	io_ctx.GetTick     = LSM6DSO_GET_TICK;
+	io_ctx.Delay       = LSM6DSO_DELAY;
 
-
-	for(int i = 0; i<50; i++){
-		IKS01A3_MOTION_SENSOR_GetAxes(IKS01A3_LSM6DSO_0, MOTION_GYRO, &calib_data.axes_gyro);
-		IKS01A3_MOTION_SENSOR_GetAxes(1, MOTION_ACCELERO, &calib_data.axes_acce);
-	}
-
-
-	for(int i = 0; i<100; i++){
-		IKS01A3_MOTION_SENSOR_GetAxes(IKS01A3_LSM6DSO_0, MOTION_GYRO, &calib_data.axes_gyro);
-		IKS01A3_MOTION_SENSOR_GetAxes(1, MOTION_ACCELERO, &calib_data.axes_acce);
-		gyrxcalib += calib_data.axes_gyro.x;
-//		printf("%d : %ld\n", i, gyrxcalib);
-		gyrycalib += calib_data.axes_gyro.y;
-		gyrzcalib += calib_data.axes_gyro.z;
-		accxcalib += calib_data.axes_acce.x;
-		accycalib += calib_data.axes_acce.y;
-		acczcalib += calib_data.axes_acce.z;
-	}
-
-	gyrxcalib = gyrxcalib/100;
-	gyrycalib = gyrycalib/100;
-	gyrzcalib = gyrzcalib/100;
-	accxcalib = accxcalib/100;
-	accycalib = accycalib/100;
-	acczcalib = acczcalib/100;
-	printf("%ld\n", gyrxcalib);
+	LSM6DSO_RegisterBusIO(&lsm6dso_obj_0, &io_ctx);
+	LSM6DSO_Init(&lsm6dso_obj_0);
 }
 
-LSM6DSO_data InitLSM6DSO_Struct(LSM6DSO_data _struct){
-	_struct.axes_acce.x = 0;
-	_struct.axes_acce.y = 0;
-	_struct.axes_acce.z = 0;
-	_struct.axes_gyro.x = 0;
-	_struct.axes_gyro.y = 0;
-	_struct.axes_gyro.z = 0;
-	return _struct;
+void MyEnableLSM6DSO(void){
+	LSM6DSO_ACC_Enable(&lsm6dso_obj_0);
+	LSM6DSO_GYRO_Enable(&lsm6dso_obj_0);
 }
 
-LSM6DSO_data CalibratedGet(LSM6DSO_data mov_data){
-	mov_data.axes_acce.x = mov_data.axes_acce.x - accxcalib;
-	mov_data.axes_acce.y = mov_data.axes_acce.y - accycalib;
-	mov_data.axes_acce.z = mov_data.axes_acce.z - acczcalib;
-	mov_data.axes_gyro.x = mov_data.axes_gyro.x - gyrxcalib;
-	mov_data.axes_gyro.y = mov_data.axes_gyro.y - gyrycalib;
-	mov_data.axes_gyro.z = mov_data.axes_gyro.z - gyrzcalib;
-	return mov_data;
+void MyGettingLSM6DSO(LSM6DSO_Axes_t *Acc, LSM6DSO_Axes_t *Gyr){
+	LSM6DSO_ACC_GetAxes(&lsm6dso_obj_0, Acc);
+	LSM6DSO_GYRO_GetAxes(&lsm6dso_obj_0, Gyr);
+	printf("______________________________________________________\n");
+	printf("Gyr X : %ld | Gyr Y : %ld | Gyr Z : %ld\n", Gyr->x, Gyr->y, Gyr->z);
+	printf("Acc X : %ld | Acc Y : %ld | Acc Z : %ld\n", Acc->x, Acc->y, Acc->z);
+}
+
+void MyInitLIS2MDL(void){
+	LIS2MDL_IO_t io_ctx_bis;
+	io_ctx_bis.BusType     = LIS2MDL_I2C_BUS;
+	io_ctx_bis.Address     = LIS2MDL_I2C_ADD_H;
+	io_ctx_bis.Init        = LIS2MDL_I2C_INIT;
+	io_ctx_bis.DeInit      = LIS2MDL_I2C_DEINIT;
+	io_ctx_bis.ReadReg     = LIS2MDL_I2C_READ_REG;
+	io_ctx_bis.WriteReg    = LIS2MDL_I2C_WRITE_REG;
+	io_ctx_bis.GetTick     = LIS2MDL_GET_TICK;
+	io_ctx_bis.Delay       = LIS2MDL_DELAY;
+
+	LIS2MDL_RegisterBusIO(&lis2mdl_obj_0, &io_ctx_bis);
+	LIS2MDL_Init(&lis2mdl_obj_0);
+}
+
+void MyEnableLIS2MDL(void){
+	LIS2MDL_MAG_Enable(&lis2mdl_obj_0);
+}
+
+void MyGettingLIS2MDL(LIS2MDL_Axes_t *Magn){
+	LIS2MDL_MAG_GetAxes(&lis2mdl_obj_0, Magn);
+	printf("Mag X : %ld | Mag Y : %ld | Mag Z : %ld\n", Magn->x, Magn->y, Magn->z);
 }

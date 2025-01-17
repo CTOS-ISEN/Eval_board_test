@@ -24,24 +24,15 @@ C_DEPS :=
 SUBDIRS := \
 Core/Src \
 Core/Startup \
-Drivers/BSP/Components/hts221 \
-Drivers/BSP/Components/lis2dw12 \
 Drivers/BSP/Components/lis2mdl \
-Drivers/BSP/Components/lps22hh \
 Drivers/BSP/Components/lsm6dso \
-Drivers/BSP/Components/stts751 \
 Drivers/BSP/Components/vl53l4cx/modules \
 Drivers/BSP/Components/vl53l4cx/porting \
 Drivers/BSP/Components/vl53l4cx \
-Drivers/BSP/IKS01A3 \
 Drivers/Logger \
 Drivers/MEMS_library \
 Drivers/STM32WBxx_HAL_Driver/Src \
 Drivers/ToF_library \
-FATFS/App \
-FATFS/Target \
-Middlewares/Third_Party/FatFs/src \
-Middlewares/Third_Party/FatFs/src/option \
 Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2 \
 Middlewares/Third_Party/FreeRTOS/Source \
 Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F \
